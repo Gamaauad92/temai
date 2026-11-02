@@ -1,0 +1,2273 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TemAí?</title>
+<meta name="description" content="Despensa, o que está em uso e a lista de compras da casa, iguais em todos os celulares.">
+<meta name="theme-color" content="#EDF0F3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E141D" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TemAí?">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="modulepreload" href="firebase.js">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+:root { color-scheme: light; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+/* Layout: três cards na ordem Despensa → Em uso → Lista de compras.
+   Celular: um embaixo do outro, com atalhos fixos no topo. Tablet: Despensa à esquerda,
+   Em uso e Lista à direita. Desktop: três colunas; só a página rola. */
+:root {
+  --bg: #EDF0F3;            /* porcelana fria */
+  --surface: #FFFFFF;
+  --surface-2: #F3F5F8;
+  --line: #DFE4EA;
+  --line-soft: #ECEFF3;
+  --line-strong: #BCC6D2;
+  --ink: #15233B;           /* azul-marinho */
+  --muted: #59667A;
+  --faint: #8B96A6;
+  --accent: #2547C0;        /* cobalto: lista de compras */
+  --accent-strong: #1B3796;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #E2E8FA;
+  --use: #10775E;           /* verde: aberto, em uso */
+  --logo-bg: #2547C0;       /* logo: casa com verificado (igual nos dois temas) */
+  --logo-fg: #FFFFFF;
+  --logo-ok: #8FE3C6;
+  --use-soft: #DCF1E9;
+  --mark: #FBEBCF;          /* realce da busca */
+  --warn: #965800;          /* vence em breve */
+  --bad: #B3321F;
+  --bad-soft: #F9E0DA;
+  --sign-bg: #15233B;
+  --sign-fg: #F3F6FA;
+  --toast-acao: #B9C8FF;
+  --scrim: rgba(12, 20, 34, .48);
+  --shadow-card: 0 1px 2px rgba(21, 35, 59, .05), 0 6px 18px rgba(21, 35, 59, .05);
+  --shadow: 0 1px 2px rgba(21, 35, 59, .06), 0 12px 32px rgba(21, 35, 59, .14);
+
+  --font-display: "Big Shoulders Display", "Big Shoulders", "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-body: "Figtree", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --r-sm: 7px;
+  --r-md: 10px;
+  --r-lg: 16px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E141D; --surface: #151E2B; --surface-2: #1B2636; --line: #273448; --line-soft: #1F2A3A; --line-strong: #3A4A62;
+    --ink: #E7ECF3; --muted: #A0ACBD; --faint: #6F7C91;
+    --accent: #8AA4FF; --accent-strong: #A9BDFF; --accent-ink: #0C1530; --accent-soft: #1E2B52;
+    --use: #5FD3AE; --use-soft: #12372D; --mark: #4A3714; --warn: #F2B256; --bad: #FF8A73; --bad-soft: #42201A;
+    --sign-bg: #DCE3EE; --sign-fg: #0E141D; --toast-acao: #2547C0; --scrim: rgba(0, 0, 0, .6);
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, .3);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 14px 36px rgba(0, 0, 0, .45);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E141D; --surface: #151E2B; --surface-2: #1B2636; --line: #273448; --line-soft: #1F2A3A; --line-strong: #3A4A62;
+  --ink: #E7ECF3; --muted: #A0ACBD; --faint: #6F7C91;
+  --accent: #8AA4FF; --accent-strong: #A9BDFF; --accent-ink: #0C1530; --accent-soft: #1E2B52;
+  --use: #5FD3AE; --use-soft: #12372D; --mark: #4A3714; --warn: #F2B256; --bad: #FF8A73; --bad-soft: #42201A;
+  --sign-bg: #DCE3EE; --sign-fg: #0E141D; --toast-acao: #2547C0; --scrim: rgba(0, 0, 0, .6);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, .3);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 14px 36px rgba(0, 0, 0, .45);
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+body {
+  margin: 0; min-height: 100%; background: var(--bg); color: var(--ink);
+  font: 400 15px/1.45 var(--font-body); -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg); }
+button { font: inherit; color: inherit; }
+button:not(:disabled) { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ic { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.vh { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+input::placeholder, textarea::placeholder { color: var(--faint); opacity: 1; }
+
+/* ---------- Topo e atalhos ---------- */
+.topo-in, .atalhos-in, .palco, .avisos {
+  width: 100%; max-width: 1320px; margin-inline: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.topo-in { padding-block: 16px 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; }
+/* Nome do app: "TemAí?" mantém a grafia (A maiúsculo), na fonte arredondada do texto. */
+.marca { margin: 0; display: inline-flex; align-items: center; gap: 10px; font: 700 27px/1 var(--font-body); letter-spacing: -.015em; }
+.logo { width: 34px; height: 34px; flex: none; }
+.data { font: 400 13px/1 var(--font-mono); color: var(--muted); }
+.atalhos { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.atalhos-in { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding-block: 8px; }
+.atalhos a {
+  display: flex; align-items: center; justify-content: center; gap: 7px; height: 40px; min-width: 0; padding: 0 6px;
+  border-radius: var(--r-sm); background: var(--surface); border: 1px solid var(--line); color: var(--ink); text-decoration: none;
+  font: 800 15px/1 var(--font-display); text-transform: uppercase; letter-spacing: .05em;
+}
+.atalhos a span { font: 500 12px/1 var(--font-mono); letter-spacing: 0; color: var(--muted); }
+.avisos { display: grid; gap: 8px; padding-top: 12px; }
+.aviso { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 12px 14px; border-radius: var(--r-md); background: var(--accent-soft); color: var(--ink); font-size: 14px; }
+.aviso p { margin: 0; flex: 1 1 260px; min-width: 0; }
+.aviso-alerta { background: var(--mark); }
+
+/* ---------- Cards ---------- */
+.palco { padding-block: 12px 48px; display: grid; gap: 14px; }
+.cards { display: grid; gap: 16px; align-items: start; }
+.card {
+  display: flex; flex-direction: column; min-width: 0; background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-lg); box-shadow: var(--shadow-card); scroll-margin-top: calc(68px + env(safe-area-inset-top, 0px));
+}
+.card-cab { display: grid; gap: 12px; padding: 16px 16px 14px; border-bottom: 1px solid var(--line); }
+.card-topo { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.card-ic { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--surface-2); color: var(--ink); }
+.card-ic .ic { width: 20px; height: 20px; }
+#cozinha .card-ic { background: var(--use-soft); color: var(--use); }
+#lista .card-ic { background: var(--accent-soft); color: var(--accent); }
+.card-tit { min-width: 0; }
+.card-tit h2 { margin: 0; font: 800 24px/1 var(--font-display); text-transform: uppercase; letter-spacing: .05em; }
+.card-sub { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
+.card-corpo { padding: 4px 0 14px; min-height: 0; }
+.card-pe { position: sticky; bottom: 0; z-index: 2; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); background: var(--surface); border-radius: 0 0 var(--r-lg) var(--r-lg); }
+
+.grupo { padding-top: 12px; }
+.grupo-tit { margin: 0; padding: 0 16px 4px; font: 500 11px/1.2 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.linhas { list-style: none; margin: 0; padding: 0; }
+.linha { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 10px; min-height: 58px; padding: 9px 12px 9px 16px; }
+.linha + .linha { border-top: 1px solid var(--line-soft); }
+.linha-zero, .linha-cozinha { grid-template-columns: minmax(0, 1fr) auto; }
+.linha-lista { grid-template-columns: auto minmax(0, 1fr) auto auto auto; padding-left: 6px; gap: 4px 8px; }
+.linha-nome {
+  display: grid; gap: 1px; min-width: 0; padding: 5px 6px; margin: -5px -6px; border: 0; background: none;
+  text-align: left; border-radius: var(--r-sm);
+}
+button.linha-nome:hover { background: var(--surface-2); }
+.nome { font: 600 17px/1.3 var(--font-body); color: var(--ink); letter-spacing: -.005em; overflow-wrap: anywhere; }
+.meta { font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
+.meta-uso { color: var(--use); }
+.meta-lista { color: var(--accent); }
+.desc { display: flex; align-items: flex-start; gap: 5px; font-size: 12.5px; line-height: 1.35; color: var(--muted); overflow-wrap: anywhere; }
+.desc .ic { width: 13px; height: 13px; margin-top: 1.5px; }
+.tag-ex {
+  display: inline-block; vertical-align: 2px; margin-left: 6px; padding: 2px 5px; border: 1px dashed var(--line-strong); border-radius: 3px;
+  font: 500 9.5px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--faint);
+}
+.qtd {
+  min-width: 32px; height: 28px; padding: 0 9px; border-radius: 7px; background: var(--surface-2); text-align: center;
+  font: 700 15px/28px var(--font-body); font-variant-numeric: tabular-nums; color: var(--ink);
+}
+.nota { margin: 14px 16px 0; color: var(--muted); font-size: 14px; }
+.vazio { margin: 14px 16px 0; padding: 18px; border: 1px dashed var(--line-strong); border-radius: var(--r-md); display: grid; gap: 6px; }
+.vazio p { margin: 0; color: var(--muted); font-size: 14px; max-width: 52ch; }
+.vazio .vazio-tit { font: 800 19px/1.1 var(--font-display); text-transform: uppercase; letter-spacing: .04em; color: var(--ink); }
+
+/* Sem estoque */
+.zerados { margin-top: 14px; border-top: 1px dashed var(--line-strong); }
+.zerados > summary {
+  list-style: none; display: flex; align-items: center; gap: 8px; padding: 14px 16px 2px; cursor: pointer;
+  font: 700 13.5px/1.2 var(--font-body); color: var(--muted);
+}
+.zerados > summary::-webkit-details-marker { display: none; }
+.zerados > summary .ic { width: 16px; height: 16px; transition: transform .15s; }
+.zerados[open] > summary .ic { transform: rotate(90deg); }
+.zerados > summary .n { font: 500 12px/1 var(--font-mono); padding: 3px 7px; border-radius: 999px; background: var(--surface-2); color: var(--ink); }
+.linha-zero .nome { color: var(--muted); }
+.marca-lista {
+  display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 10px; border-radius: 999px;
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font: 600 12.5px/1 var(--font-body); white-space: nowrap;
+}
+.marca-lista .ic { width: 14px; height: 14px; }
+.marca-lista.on { background: var(--accent-soft); border-color: var(--accent-soft); color: var(--accent); }
+button.marca-lista:hover { border-color: var(--accent); }
+
+/* ---------- Botões ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 40px; padding: 0 14px;
+  border-radius: var(--r-sm); border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
+  font: 600 14px/1 var(--font-body); white-space: nowrap; transition: background .15s, border-color .15s, color .15s;
+}
+.btn:hover { background: var(--surface-2); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn-pri { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn-pri:hover:not(:disabled) { background: var(--accent-strong); border-color: var(--accent-strong); }
+.btn-mini { height: 32px; padding: 0 11px; font-size: 13px; gap: 5px; }
+.btn-mini .ic { width: 15px; height: 15px; }
+.btn-perigo { color: var(--bad); }
+.btn-perigo[data-confirma="1"], .btn-confirma { background: var(--bad); border-color: var(--bad); color: var(--surface); }
+.btn-larga { width: 100%; height: 48px; font-size: 15px; }
+.x { appearance: none; border: 0; background: none; width: 34px; height: 34px; flex: none; display: grid; place-items: center; border-radius: var(--r-sm); color: var(--muted); }
+.x:hover { background: var(--surface-2); color: var(--ink); }
+.check { appearance: none; border: 0; background: none; width: 40px; height: 42px; display: grid; place-items: center; border-radius: var(--r-sm); }
+.check-caixa { width: 24px; height: 24px; border-radius: 7px; border: 2px solid var(--line-strong); display: grid; place-items: center; color: transparent; background: var(--surface); transition: background .15s, border-color .15s; }
+.check-caixa .ic { width: 15px; height: 15px; stroke-width: 3; }
+.check[aria-pressed="true"] .check-caixa { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.feito .nome { text-decoration: line-through; text-decoration-thickness: 1.5px; color: var(--muted); }
+body.ro .so-edicao { display: none !important; }
+
+/* ---------- Busca de produtos ---------- */
+.combo { position: relative; }
+.combo-campo { position: relative; display: flex; align-items: center; }
+.combo-campo .ic { position: absolute; left: 12px; color: var(--muted); pointer-events: none; }
+.combo .combo-campo input {
+  width: 100%; min-width: 0; height: 42px; padding: 0 12px 0 38px; border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  background: var(--bg); color: var(--ink); font: 400 16px/1 var(--font-body);
+}
+.combo-lista {
+  position: absolute; z-index: 15; left: 0; right: 0; top: calc(100% + 4px); list-style: none; margin: 0; padding: 4px;
+  max-height: 300px; overflow-y: auto; overscroll-behavior: contain; background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-md); box-shadow: var(--shadow);
+}
+.op { display: grid; gap: 2px; padding: 9px 10px; border-radius: 8px; cursor: pointer; }
+.op[aria-selected="true"] { background: var(--accent-soft); }
+.op-nome { display: flex; align-items: center; gap: 6px; font-weight: 600; overflow-wrap: anywhere; }
+.op-nome mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 1px; }
+.op-meta { font-size: 12.5px; color: var(--muted); }
+.op-novo .op-nome { color: var(--accent); }
+.op-novo .ic { width: 15px; height: 15px; }
+.op-sep { height: 1px; margin: 4px 6px; background: var(--line); }
+
+/* ---------- Folhas (diálogos) ---------- */
+dialog.folha {
+  border: 0; padding: 0; margin: auto; width: min(540px, calc(100vw - 32px)); max-width: 100vw; max-height: min(88vh, 780px);
+  background: var(--surface); color: var(--ink); border-radius: var(--r-lg); box-shadow: var(--shadow); overflow: hidden;
+}
+dialog.folha[open] { display: flex; flex-direction: column; }
+dialog.folha::backdrop { background: rgba(12, 20, 34, .5); background: var(--scrim, rgba(12, 20, 34, .5)); }
+dialog.folha.sem-modal[open] { position: fixed; inset: auto 0 0; z-index: 70; margin: 0 auto; }
+dialog.folha-curta { width: min(440px, calc(100vw - 32px)); }
+@media (max-width: 600px) {
+  dialog.folha { width: 100vw; margin: auto 0 0; border-radius: var(--r-lg) var(--r-lg) 0 0; max-height: 92vh; }
+}
+.folha-form { display: flex; flex-direction: column; min-height: 0; flex: 1 1 auto; }
+.folha-cab {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 16px max(18px, env(safe-area-inset-right, 0px)) 6px max(18px, env(safe-area-inset-left, 0px));
+}
+.folha-cab h2 { margin: 0; font: 800 24px/1 var(--font-display); text-transform: uppercase; letter-spacing: .04em; }
+.folha-corpo { display: grid; gap: 14px; overflow-y: auto; padding: 8px max(18px, env(safe-area-inset-right, 0px)) 16px max(18px, env(safe-area-inset-left, 0px)); }
+.folha-corpo > p { margin: 0; color: var(--muted); font-size: 14.5px; }
+.folha-corpo > p b { color: var(--ink); }
+.folha-pe {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--line);
+  padding: 12px max(18px, env(safe-area-inset-right, 0px)) calc(14px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
+}
+.folha-pe .sep { flex: 1 1 auto; }
+.campo { display: grid; gap: 6px; min-width: 0; }
+.campo > span, .rotulo { font: 600 13px/1.2 var(--font-body); }
+.campo input, .campo textarea {
+  width: 100%; min-width: 0; height: 44px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  background: var(--bg); color: var(--ink); font: 400 16px/1.2 var(--font-body);
+}
+.campo textarea { height: auto; padding: 10px 12px; font: 400 14px/1.5 var(--font-mono); resize: vertical; }
+.campo small { color: var(--muted); font-size: 12.5px; line-height: 1.4; }
+.interruptor { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--bg); font-weight: 500; cursor: pointer; }
+.interruptor input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); flex: none; }
+.erro { margin: 0; color: var(--bad); font-size: 13.5px; font-weight: 600; }
+.seg { display: inline-flex; gap: 3px; padding: 3px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); }
+.seg button { height: 34px; padding: 0 14px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font: 600 13.5px/1 var(--font-body); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--line-strong); }
+.cont { display: inline-flex; align-items: stretch; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); overflow: hidden; }
+.cont-b { appearance: none; border: 0; background: transparent; width: 38px; min-height: 38px; display: grid; place-items: center; color: var(--ink); }
+.cont-b:hover:not(:disabled) { background: var(--surface-2); }
+.cont-b:disabled { color: var(--faint); }
+.cont-b:focus-visible { outline-offset: -3px; }
+.cont-v { width: 48px; display: grid; place-items: center; border-inline: 1px solid var(--line); font: 500 16px/1 var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* Compra */
+.da-lista { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.da-lista p { margin: 0 0 2px; width: 100%; font-size: 12.5px; color: var(--muted); }
+.chip-add {
+  height: 30px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
+  font: 600 13px/1 var(--font-body); display: inline-flex; align-items: center; gap: 5px;
+}
+.chip-add .ic { width: 14px; height: 14px; }
+.chip-add:hover { border-color: var(--accent); }
+.linhas-compra { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.lc { display: grid; gap: 10px; padding: 10px 10px 12px 14px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); }
+.lc-cab { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.lc-nome { flex: 1 1 auto; min-width: 0; font-weight: 700; overflow-wrap: anywhere; }
+.tag-novo { font: 500 10.5px/1 var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--accent); background: var(--accent-soft); padding: 4px 6px; border-radius: 4px; white-space: nowrap; }
+.lc-ctrl { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.lc-par { display: flex; align-items: center; gap: 8px; }
+.lc-par .rotulo { font-weight: 500; color: var(--muted); font-size: 12.5px; }
+.lc-efeito { margin: 0; font: 400 12.5px/1.3 var(--font-mono); color: var(--muted); }
+.lc-desc { display: grid; gap: 5px; }
+.lc-desc .rotulo { font-weight: 500; color: var(--muted); font-size: 12.5px; }
+.lc-desc input {
+  width: 100%; min-width: 0; height: 40px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  background: var(--bg); color: var(--ink); font: 400 16px/1.2 var(--font-body);
+}
+.opc { font-weight: 400; color: var(--muted); }
+
+/* Preços em R$ */
+.dinheiro { position: relative; display: flex; align-items: center; min-width: 0; }
+.dinheiro > span { position: absolute; left: 11px; font: 500 13px/1 var(--font-mono); color: var(--muted); pointer-events: none; }
+.dinheiro input.din {
+  width: 100%; min-width: 0; height: 44px; padding: 0 12px 0 36px; border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  background: var(--bg); color: var(--ink); font: 400 16px/1.2 var(--font-mono); font-variant-numeric: tabular-nums;
+}
+.lc-par .dinheiro input.din { width: 118px; height: 40px; }
+.din[aria-invalid="true"] { border-color: var(--bad); }
+.compra-total { font: 500 14px/1.2 var(--font-mono); font-variant-numeric: tabular-nums; }
+.preco { display: grid; justify-items: end; gap: 3px; padding-inline: 4px; font: 500 13px/1 var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--muted); }
+.preco small { font: 400 11px/1 var(--font-mono); color: var(--faint); }
+.preco-sem { font-weight: 400; font-size: 12px; color: var(--faint); }
+.feito .preco { color: var(--muted); }
+.estimativa { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: var(--r-md); background: var(--accent-soft); }
+.estimativa > div { min-width: 0; }
+.est-rot { margin: 0; font: 600 13.5px/1.2 var(--font-body); }
+.est-nota { margin: 3px 0 0; font-size: 12px; line-height: 1.35; color: var(--muted); }
+.est-valor { margin: 0; flex: none; font: 500 20px/1 var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Quantidade na lista e pergunta de quantidade */
+.qtd-lista {
+  min-width: 34px; height: 26px; padding: 0 7px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface);
+  color: var(--ink); font: 700 14px/24px var(--font-body); font-variant-numeric: tabular-nums; text-align: center; white-space: nowrap;
+}
+button.qtd-lista:hover { border-color: var(--accent); color: var(--accent); }
+span.qtd-lista { border-color: transparent; }
+.feito .qtd-lista { opacity: .6; }
+.dz-qtd { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.cont-n {
+  width: 60px; min-width: 0; border: 0; border-inline: 1px solid var(--line); border-radius: 0; background: transparent; color: var(--ink);
+  text-align: center; font: 500 17px/1 var(--font-mono); font-variant-numeric: tabular-nums; -moz-appearance: textfield; appearance: textfield;
+}
+.cont-n::-webkit-inner-spin-button, .cont-n::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.cont-n:focus-visible { outline-offset: -3px; }
+.folha-corpo > p.dz-valor { font: 400 13px/1.3 var(--font-mono); color: var(--muted); }
+.dz-desc:empty { display: none; }
+
+/* Tirar da despensa (ao lado do nome) */
+.nome-bloco { display: grid; gap: 1px; min-width: 0; }
+.nome-linha { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.nome-btn { appearance: none; min-width: 0; padding: 2px 6px; margin: -2px -6px; border: 0; border-radius: var(--r-sm); background: none; color: inherit; text-align: left; overflow-wrap: anywhere; }
+.nome-btn:hover { background: var(--surface-2); }
+/* "×" discreto: pequeno e quase transparente; fica forte só ao passar o mouse ou com o foco do teclado. */
+.rm { appearance: none; flex: none; width: 22px; height: 22px; margin-left: 4px; border: 0; background: none; border-radius: 5px; color: var(--faint); opacity: .4; display: grid; place-items: center; transition: opacity .15s, color .15s, background .15s; }
+.rm .ic { width: 11px; height: 11px; stroke-width: 2.4; }
+.rm:hover, .rm:focus-visible { opacity: 1; color: var(--bad); background: var(--bad-soft); }
+
+/* Validade */
+.venc-warn { color: var(--warn); }
+.venc-bad { color: var(--bad); font-weight: 600; }
+input.data-val {
+  height: 40px; min-width: 0; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  background: var(--bg); color: var(--ink); font: 400 15px/1.2 var(--font-body);
+}
+.lc-par input.data-val { width: 160px; }
+.lotes { display: grid; gap: 6px; }
+.lote { display: flex; align-items: center; gap: 10px; }
+.lote-n { min-width: 40px; font: 500 14px/1 var(--font-mono); color: var(--muted); }
+.lote input.data-val { flex: 1 1 auto; max-width: 200px; }
+
+/* Indicador de salvamento, no cabeçalho */
+.sync { margin-left: auto; display: inline-flex; align-items: center; gap: 7px; font: 400 12.5px/1.2 var(--font-mono); color: var(--muted); white-space: nowrap; }
+.sync::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--use); }
+.sync[data-estado="salvando"]::before { background: var(--warn); }
+.sync[data-estado="abrindo"]::before { background: var(--faint); }
+.sync[data-estado="erro"] { color: var(--bad); }
+.sync[data-estado="erro"]::before { background: var(--bad); }
+.compra-vazia { margin: 0; padding: 14px; border: 1px dashed var(--line-strong); border-radius: var(--r-md); color: var(--muted); font-size: 14px; }
+
+/* ---------- Aviso rápido ---------- */
+.toast {
+  position: fixed; z-index: 60; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px)); margin-inline: auto; max-width: 560px;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; padding: 10px 10px 10px 16px;
+  border-radius: var(--r-md); background: var(--sign-bg); color: var(--sign-fg); box-shadow: var(--shadow); font-size: 14.5px;
+  animation: sobe .2s ease-out;
+}
+.toast p { margin: 0; flex: 1 1 220px; padding-block: 6px; }
+.toast-acoes { display: flex; gap: 2px; margin-left: auto; }
+.toast-acao { appearance: none; border: 0; background: none; color: var(--toast-acao); font: 700 14px/1 var(--font-body); padding: 10px; border-radius: var(--r-sm); }
+.toast-acao:focus-visible { outline-color: var(--toast-acao); }
+@keyframes sobe { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes pisca { from { background-color: var(--accent-soft); } to { background-color: transparent; } }
+.pisca { animation: pisca 1.8s ease-out; }
+
+/* ---------- Larguras ---------- */
+@media (max-width: 759px) {
+  body.tem-pe .toast { bottom: calc(86px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (min-width: 760px) {
+  .atalhos { display: none; }
+  .topo-in { padding-block: 22px 6px; }
+  .marca { font-size: 30px; }
+  .cards { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+  #despensa { grid-row: span 2; }
+  .card-pe { position: static; }
+}
+@media (min-width: 1100px) {
+  .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  #despensa { grid-row: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ---------- App compartilhado: entrada, conta e importação ---------- */
+.sync[data-estado="offline"]::before { background: var(--faint); }
+.conta {
+  appearance: none; flex: none; width: 34px; height: 34px; padding: 0; border-radius: 50%;
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--accent);
+  display: grid; place-items: center; font: 700 15px/1 var(--font-body);
+}
+.conta:hover { border-color: var(--accent); background: var(--accent-soft); }
+@media (max-width: 759px) {
+  /* Celular: marca e conta na primeira linha; data e sincronização na segunda. */
+  .topo-in::after { content: ""; order: 2; flex-basis: 100%; height: 0; }
+  .conta { order: 1; margin-left: auto; }
+  .data { order: 3; }
+  .sync { order: 4; }
+}
+body.fora .atalhos, body.fora .avisos, body.fora .palco, body.fora .sync, body.fora .conta { display: none !important; }
+.portao {
+  min-height: 70vh; display: grid; place-items: center;
+  padding: 24px max(16px, env(safe-area-inset-right, 0px)) 56px max(16px, env(safe-area-inset-left, 0px));
+}
+.portao-card {
+  width: min(420px, 100%); display: grid; gap: 14px; justify-items: center; text-align: center;
+  padding: 30px 22px 24px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-card);
+}
+.portao-logo { width: 72px; height: 72px; }
+.portao-card h2 { margin: 0; font: 800 30px/1.05 var(--font-display); text-transform: uppercase; letter-spacing: .04em; text-wrap: balance; }
+.portao-card p { margin: 0; color: var(--muted); max-width: 38ch; }
+.portao-card p b { color: var(--ink); overflow-wrap: anywhere; }
+.portao-card .btn { width: 100%; }
+.portao-card .erro { color: var(--bad); }
+.portao-nota { font-size: 13px; }
+.conta-email { overflow-wrap: anywhere; }
+.conta-acoes { display: grid; gap: 8px; }
+.conta-acoes .btn { width: 100%; height: 46px; justify-content: flex-start; }
+.conta-nota { margin: 0; color: var(--muted); font-size: 13.5px; }
+.conta-nota.alerta { color: var(--bad); font-weight: 600; }
+.conta-versao { margin: 0; color: var(--faint); font: 400 12px/1.3 var(--font-mono); }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-mais" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-menos" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+  <symbol id="i-busca" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></symbol>
+  <symbol id="i-copiar" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 5.5h-9a1 1 0 0 0-1 1v9"/></symbol>
+  <symbol id="i-seta" viewBox="0 0 24 24"><path d="M9.5 6l6 6-6 6"/></symbol>
+  <symbol id="i-armario" viewBox="0 0 24 24"><rect x="4" y="3.5" width="16" height="17" rx="1.5"/><path d="M4 10h16M4 15.5h16M7.5 10V7h3v3M13.5 15.5v-2.5h3v2.5"/></symbol>
+  <symbol id="i-aberto" viewBox="0 0 24 24"><rect x="7" y="9.5" width="10" height="11" rx="2.5"/><path d="M8.5 6.5l7-2M12 13v4"/></symbol>
+  <symbol id="i-logo" viewBox="0 0 96 96">
+    <rect width="96" height="96" rx="24" style="fill: var(--logo-bg); stroke: none"/>
+    <path d="M21 47 L48 24 L75 47" style="fill: none; stroke: var(--logo-fg); stroke-width: 6.5; stroke-linecap: round; stroke-linejoin: round"/>
+    <path d="M29 43 V70 a4 4 0 0 0 4 4 H63 a4 4 0 0 0 4 -4 V43" style="fill: none; stroke: var(--logo-fg); stroke-width: 6.5; stroke-linecap: round; stroke-linejoin: round"/>
+    <path d="M37.5 57.5 L45.5 65.5 L59.5 51" style="fill: none; stroke: var(--logo-ok); stroke-width: 6.5; stroke-linecap: round; stroke-linejoin: round"/>
+  </symbol>
+  <symbol id="i-carrinho" viewBox="0 0 24 24"><path d="M3 4h2.2l2.3 10.3a1.6 1.6 0 0 0 1.6 1.2h8.2a1.6 1.6 0 0 0 1.5-1.1L21 8H6.3"/><circle cx="9.5" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></symbol>
+  <symbol id="i-sacola" viewBox="0 0 24 24"><path d="M5.5 8.5h13l-1 11.5h-11z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></symbol>
+  <symbol id="i-nota" viewBox="0 0 24 24"><path d="M4.5 6.5h15M4.5 12h15M4.5 17.5h9"/></symbol>
+  <symbol id="i-importar" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5"/><path d="M5 17.5v1A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5v-1"/></symbol>
+  <symbol id="i-exportar" viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/><path d="M5 17.5v1A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5v-1"/></symbol>
+  <symbol id="i-celular" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 17.5h2"/></symbol>
+  <symbol id="i-sair" viewBox="0 0 24 24"><path d="M14 4.5h4A1.5 1.5 0 0 1 19.5 6v12a1.5 1.5 0 0 1-1.5 1.5h-4"/><path d="M10 8l-4 4 4 4M6 12h9"/></symbol>
+</svg>
+
+<header class="topo">
+  <div class="topo-in">
+    <h1 class="marca"><svg class="logo" viewBox="0 0 96 96" aria-hidden="true"><use href="#i-logo"/></svg><span id="nome-app">TemAí?</span></h1>
+    <span class="data" id="hoje"></span>
+    <span class="sync" id="sync" data-estado="abrindo" role="status">Abrindo…</span>
+    <button class="conta" type="button" id="conta" data-acao="conta" aria-label="Conta e dados" title="Conta e dados" hidden><span id="conta-ini">?</span></button>
+  </div>
+</header>
+
+<section class="portao" id="portao" aria-labelledby="portao-tit" hidden>
+  <div class="portao-card">
+    <svg class="portao-logo" viewBox="0 0 96 96" aria-hidden="true"><use href="#i-logo"/></svg>
+    <h2 id="portao-tit">Entrar</h2>
+    <p id="portao-txt"></p>
+    <button class="btn btn-pri btn-larga" type="button" id="portao-btn" data-acao="entrar">Entrar com Google</button>
+    <button class="btn btn-larga" type="button" id="portao-btn2" data-acao="tentar" hidden>Tentar de novo</button>
+    <p class="erro" id="portao-erro" role="alert" hidden></p>
+    <p class="portao-nota" id="portao-nota"></p>
+  </div>
+</section>
+
+<nav class="atalhos" aria-label="Ir para">
+  <div class="atalhos-in">
+    <a href="#despensa">Despensa <span id="a-despensa">0</span></a>
+    <a href="#cozinha">Em uso <span id="a-cozinha">0</span></a>
+    <a href="#lista">Lista <span id="a-lista">0</span></a>
+  </div>
+</nav>
+
+<div class="avisos" id="avisos" hidden></div>
+
+<main class="palco">
+  <div id="exemplos"></div>
+  <div class="cards">
+    <section class="card" id="despensa" aria-labelledby="t-despensa">
+      <div class="card-cab">
+        <div class="card-topo">
+          <span class="card-ic"><svg class="ic" aria-hidden="true"><use href="#i-armario"/></svg></span>
+          <div class="card-tit"><h2 id="t-despensa">Despensa</h2><p class="card-sub" id="sub-despensa">Abrindo…</p></div>
+          <button class="btn btn-pri so-edicao" type="button" data-acao="comprar" data-k="comprar"><svg class="ic" aria-hidden="true"><use href="#i-sacola"/></svg>Cadastrar compra</button>
+        </div>
+      </div>
+      <div class="card-corpo" id="corpo-despensa"></div>
+    </section>
+
+    <section class="card" id="cozinha" aria-labelledby="t-cozinha">
+      <div class="card-cab">
+        <div class="card-topo">
+          <span class="card-ic"><svg class="ic" aria-hidden="true"><use href="#i-aberto"/></svg></span>
+          <div class="card-tit"><h2 id="t-cozinha">Em uso</h2><p class="card-sub" id="sub-cozinha">Abrindo…</p></div>
+        </div>
+      </div>
+      <div class="card-corpo" id="corpo-cozinha"></div>
+    </section>
+
+    <section class="card" id="lista" aria-labelledby="t-lista">
+      <div class="card-cab">
+        <div class="card-topo">
+          <span class="card-ic"><svg class="ic" aria-hidden="true"><use href="#i-carrinho"/></svg></span>
+          <div class="card-tit"><h2 id="t-lista">Lista de compras</h2><p class="card-sub" id="sub-lista">Abrindo…</p></div>
+          <button class="btn btn-mini" type="button" data-acao="copiar" data-k="copiar" title="Copiar a lista como texto"><svg class="ic" aria-hidden="true"><use href="#i-copiar"/></svg>Copiar</button>
+        </div>
+        <div class="combo so-edicao">
+          <label class="vh" for="busca-lista">Adicionar à lista</label>
+          <div class="combo-campo">
+            <svg class="ic" aria-hidden="true"><use href="#i-busca"/></svg>
+            <input id="busca-lista" type="text" role="combobox" aria-expanded="false" aria-controls="res-lista" aria-autocomplete="list" autocomplete="off" placeholder="Adicionar à lista (ex.: coca)" enterkeyhint="done">
+          </div>
+          <ul class="combo-lista" id="res-lista" role="listbox" aria-label="Produtos encontrados" hidden></ul>
+        </div>
+        <div class="estimativa" id="estimativa" hidden>
+          <div><p class="est-rot">Valor estimado</p><p class="est-nota" id="est-nota"></p></div>
+          <p class="est-valor" id="est-valor"></p>
+        </div>
+      </div>
+      <div class="card-corpo" id="corpo-lista"></div>
+      <div class="card-pe so-edicao" id="pe-lista" hidden>
+        <button class="btn btn-pri btn-larga" type="button" data-acao="comprar-carrinho" data-k="comprar-carrinho" id="btn-compra-lista">Cadastrar compra</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<dialog class="folha" id="dlg-compra" aria-labelledby="dc-tit">
+  <form class="folha-form" id="form-compra" novalidate>
+    <div class="folha-cab">
+      <h2 id="dc-tit">Cadastrar compra</h2>
+      <button class="x" type="button" data-fechar aria-label="Fechar"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="folha-corpo">
+      <div class="campo">
+        <label class="rotulo" for="busca-compra">Produto comprado</label>
+        <div class="combo">
+          <div class="combo-campo">
+            <svg class="ic" aria-hidden="true"><use href="#i-busca"/></svg>
+            <input id="busca-compra" type="text" role="combobox" aria-expanded="false" aria-controls="res-compra" aria-autocomplete="list" autocomplete="off" placeholder="Digite parte do nome (ex.: coca)" enterkeyhint="done">
+          </div>
+          <ul class="combo-lista" id="res-compra" role="listbox" aria-label="Produtos encontrados" hidden></ul>
+        </div>
+      </div>
+      <div class="da-lista" id="compra-da-lista"></div>
+      <ul class="linhas-compra" id="compra-linhas"></ul>
+      <p class="compra-vazia" id="compra-vazia">Busque o produto acima. Se ele ainda não existir, cadastre na hora: ele entra na sua base de produtos. Tudo o que for cadastrado aqui vai para a despensa.</p>
+      <p class="erro" id="compra-erro" role="alert" hidden></p>
+    </div>
+    <div class="folha-pe">
+      <span class="compra-total" id="compra-total" hidden></span>
+      <span class="sep"></span>
+      <button class="btn" type="button" data-fechar>Cancelar</button>
+      <button class="btn btn-pri" type="submit" id="compra-salvar" disabled>Salvar compra</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="folha folha-curta" id="dlg-zero" aria-labelledby="dz-tit">
+  <form class="folha-form" id="form-zero" novalidate>
+    <div class="folha-cab"><h2 id="dz-tit">Pôr na lista</h2></div>
+    <div class="folha-corpo">
+      <p id="dz-txt"></p>
+      <div class="dz-desc" id="dz-desc"></div>
+      <div class="dz-qtd">
+        <label class="rotulo" for="dz-n">Quantidade para comprar</label>
+        <div class="cont">
+          <button class="cont-b" type="button" id="dz-menos" data-acao="dz-menos" aria-label="Menos"><svg class="ic" aria-hidden="true"><use href="#i-menos"/></svg></button>
+          <input class="cont-n" id="dz-n" type="number" inputmode="numeric" min="1" max="999" step="1" value="1">
+          <button class="cont-b" type="button" data-acao="dz-mais" aria-label="Mais"><svg class="ic" aria-hidden="true"><use href="#i-mais"/></svg></button>
+        </div>
+      </div>
+      <p class="dz-valor" id="dz-valor"></p>
+    </div>
+    <div class="folha-pe">
+      <span class="sep"></span>
+      <button class="btn" type="button" id="dz-nao">Agora não</button>
+      <button class="btn btn-pri" type="submit" id="dz-sim">Pôr na lista</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="folha" id="dlg-produto" aria-labelledby="dp-tit">
+  <form class="folha-form" id="form-produto" novalidate>
+    <div class="folha-cab">
+      <h2 id="dp-tit">Editar produto</h2>
+      <button class="x" type="button" data-fechar aria-label="Fechar"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="folha-corpo">
+      <label class="campo" for="fp-nome"><span>Nome</span>
+        <input id="fp-nome" maxlength="80" autocomplete="off">
+      </label>
+      <label class="campo" for="fp-desc"><span>Descrição <span class="opc">(opcional)</span></span>
+        <input id="fp-desc" maxlength="100" autocomplete="off" placeholder="Ex.: 1 = 1 fardo com 6 latas">
+      </label>
+      <div class="campo">
+        <span class="rotulo" id="fp-tipo-rot">Tipo</span>
+        <div class="seg" id="fp-tipo" role="group" aria-labelledby="fp-tipo-rot" data-valor="alimento">
+          <button type="button" data-acao="tipo" data-valor="alimento" aria-pressed="true">Alimento</button>
+          <button type="button" data-acao="tipo" data-valor="limpeza" aria-pressed="false">Produto de limpeza</button>
+        </div>
+      </div>
+      <label class="campo" id="fp-listaqtd-campo" for="fp-listaqtd" hidden><span>Quantidade para comprar</span>
+        <input id="fp-listaqtd" type="number" inputmode="numeric" min="1" max="999" step="1" value="1">
+      </label>
+      <div class="campo" id="fp-preco-campo">
+        <label class="rotulo" for="fp-preco">Último preço por unidade</label>
+        <div class="dinheiro"><span aria-hidden="true">R$</span><input class="din" id="fp-preco" type="text" inputmode="numeric" autocomplete="off" value="0,00"></div>
+        <small id="fp-preco-info"></small>
+      </div>
+      <label class="campo" id="fp-qtd-campo" for="fp-qtd"><span>Fechados na despensa</span>
+        <input id="fp-qtd" type="number" inputmode="numeric" min="0" step="1">
+        <small>Use para corrigir a contagem. O que você compra entra por Cadastrar compra.</small>
+      </label>
+      <div class="campo" id="fp-lotes-campo" hidden>
+        <span class="rotulo">Validade do que está na despensa</span>
+        <div class="lotes" id="fp-lotes"></div>
+        <small>Corrija aqui uma data digitada errada. Ao tocar em Abrir, sai primeiro o que vence antes.</small>
+      </div>
+      <label class="interruptor" id="fp-uso-campo" for="fp-uso">
+        <input id="fp-uso" type="checkbox">
+        <span>Tem um aberto, em uso</span>
+      </label>
+      <p class="erro" id="fp-erro" role="alert" hidden></p>
+    </div>
+    <div class="folha-pe">
+      <button class="btn btn-perigo" type="button" id="fp-excluir">Excluir da base</button>
+      <span class="sep"></span>
+      <button class="btn" type="button" data-fechar>Cancelar</button>
+      <button class="btn btn-pri" type="submit" id="fp-salvar">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="folha" id="dlg-copiar" aria-labelledby="dk-tit">
+  <div class="folha-form">
+    <div class="folha-cab">
+      <h2 id="dk-tit">Copiar lista</h2>
+      <button class="x" type="button" data-fechar aria-label="Fechar"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="folha-corpo">
+      <p>Não deu para copiar direto. O texto já está selecionado: copie e cole no WhatsApp ou onde preferir.</p>
+      <label class="campo" for="dk-txt"><span>Texto da lista</span>
+        <textarea id="dk-txt" rows="10" readonly></textarea>
+      </label>
+    </div>
+    <div class="folha-pe">
+      <span class="sep"></span>
+      <button class="btn" type="button" data-fechar>Fechar</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="folha folha-curta" id="dlg-conta" aria-labelledby="dct-tit">
+  <div class="folha-form">
+    <div class="folha-cab">
+      <h2 id="dct-tit">Conta e dados</h2>
+      <button class="x" type="button" data-fechar aria-label="Fechar"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="folha-corpo">
+      <p>Conectado como <b class="conta-email" id="conta-email"></b>. O que você muda aparece na hora para quem mais usa o TemAí? na casa.</p>
+      <div class="conta-acoes">
+        <button class="btn" type="button" data-acao="instalar" id="btn-instalar" hidden><svg class="ic" aria-hidden="true"><use href="#i-celular"/></svg>Instalar neste aparelho</button>
+        <button class="btn" type="button" data-acao="importar"><svg class="ic" aria-hidden="true"><use href="#i-importar"/></svg>Importar dados (arquivo .json)</button>
+        <button class="btn" type="button" data-acao="exportar"><svg class="ic" aria-hidden="true"><use href="#i-exportar"/></svg>Exportar uma cópia dos dados</button>
+      </div>
+      <p class="conta-nota" id="conta-dica" hidden>No iPhone, para instalar: no Safari, toque em Compartilhar e depois em Adicionar à Tela de Início.</p>
+      <p class="conta-nota" id="conta-pendente" hidden></p>
+      <p class="conta-versao" id="conta-versao"></p>
+    </div>
+    <div class="folha-pe">
+      <button class="btn btn-perigo" type="button" id="btn-sair"><svg class="ic" aria-hidden="true"><use href="#i-sair"/></svg><span id="btn-sair-txt">Sair deste aparelho</span></button>
+      <span class="sep"></span>
+      <button class="btn" type="button" data-fechar>Fechar</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="folha folha-curta" id="dlg-importar" aria-labelledby="dim-tit">
+  <form class="folha-form" id="form-importar" novalidate>
+    <div class="folha-cab">
+      <h2 id="dim-tit">Importar dados</h2>
+      <button class="x" type="button" data-fechar aria-label="Fechar"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="folha-corpo">
+      <p id="dim-txt"></p>
+    </div>
+    <div class="folha-pe">
+      <span class="sep"></span>
+      <button class="btn" type="button" data-fechar>Cancelar</button>
+      <button class="btn btn-pri" type="submit" id="dim-ok">Importar</button>
+    </div>
+  </form>
+</dialog>
+
+<input type="file" id="arquivo" accept=".json,application/json" hidden>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden>
+  <p id="toast-msg"></p>
+  <div class="toast-acoes" id="toast-acoes"></div>
+</div>
+
+<script type="module">
+(() => {
+  'use strict';
+
+  /* ================= Vocabulário ================= */
+  const TIPOS = ['alimento', 'limpeza'];
+  const TITULO_TIPO = { alimento: 'Alimentos', limpeza: 'Limpeza' };
+  const NOME_TIPO = { alimento: 'alimento', limpeza: 'produto de limpeza' };
+  const PALAVRAS_LIMPEZA = 'detergente, sabão, sabao, amaciante, desinfetante, água sanitária, cloro, esponja, multiuso, alvejante, ' +
+    'limpa vidro, limpador, saco de lixo, papel higiênico, papel toalha, sabonete, shampoo, xampu, condicionador, pasta de dente, ' +
+    'creme dental, escova de dente, desodorante, absorvente, fio dental, algodão, cotonete, inseticida, lustra móveis, palha de aço, ' +
+    'pano de chão, pano de prato, flanela, vassoura, rodo, álcool, lava roupas, lava louças, tira manchas, odorizador, luva';
+
+  /* ================= Utilidades ================= */
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const norm = (s) => String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const normFrase = (s) => norm(s).replace(/[^a-z0-9]+/g, ' ').trim();
+  const singular = (s) => s.split(' ').map((w) => (w.length > 3 && w.endsWith('s') ? w.slice(0, -1) : w)).join(' ');
+  const num = (v, padrao = 0) => { const n = typeof v === 'number' ? v : parseFloat(String(v == null ? '' : v).replace(',', '.')); return Number.isFinite(n) ? n : padrao; };
+  const agora = () => new Date().toISOString();
+  const novoId = (pre) => `${pre}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+  const limpo = (s) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+  const capitalizar = (s) => (s ? s.charAt(0).toLocaleUpperCase('pt-BR') + s.slice(1) : s);
+  const collator = new Intl.Collator('pt-BR', { sensitivity: 'base', numeric: true });
+  const codigo = (e) => (e && typeof e.code === 'string' ? e.code : 'unavailable');
+  const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+  const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+  const fmtR = (n) => brl.format(n);
+  const fmtNum = (n) => Number(n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtData = (iso) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('pt-BR'); };
+  // Lê um valor em reais digitado à brasileira ("5,49", "R$ 1.234,50") ou com ponto ("5.49").
+  // Vazio devolve null; texto que não é valor devolve NaN.
+  function lerPreco(txt) {
+    let s = String(txt == null ? '' : txt).replace(/r\$|\s/gi, '');
+    if (!s) return null;
+    if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+    else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+    if (!/^\d+(\.\d+)?$/.test(s)) return NaN;
+    const n = Math.round(parseFloat(s) * 100) / 100;
+    return n > 0 ? n : null;   // 0,00 = sem preço
+  }
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const ehDataISO = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+  const hojeISO = () => { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; };
+  const dataBR = (iso) => (ehDataISO(iso) ? iso.split('-').reverse().join('/') : '');
+  // Situação de uma data de validade: vencido, vence em até 7 dias ou data normal.
+  function infoValidade(iso) {
+    if (!ehDataISO(iso)) return null;
+    const dias = Math.round((Date.parse(`${iso}T12:00:00`) - Date.parse(`${hojeISO()}T12:00:00`)) / 86400000);
+    if (dias < 0) return { cls: 'venc-bad', txt: `Venceu em ${dataBR(iso)}` };
+    if (dias === 0) return { cls: 'venc-bad', txt: 'Vence hoje' };
+    if (dias === 1) return { cls: 'venc-warn', txt: 'Vence amanhã' };
+    if (dias <= 7) return { cls: 'venc-warn', txt: `Vence em ${dias} dias (${dataBR(iso)})` };
+    return { cls: '', txt: `Vence em ${dataBR(iso)}` };
+  }
+  // Lotes da despensa: [{ validade, qtd }], do que vence antes ao que vence depois (sem data por último).
+  // Sempre somam o que está guardado: o que falta entra sem data; o que sobra sai do que vence antes.
+  function ajustarLotes(lotes, qtd) {
+    const m = new Map();
+    for (const l of Array.isArray(lotes) ? lotes : []) {
+      const n = Math.max(0, Math.round(num(l && l.qtd)));
+      if (!n) continue;
+      const v = l && ehDataISO(l.validade) ? l.validade : null;
+      m.set(v, (m.get(v) || 0) + n);
+    }
+    let arr = [...m].map(([validade, n]) => ({ validade, qtd: n }))
+      .sort((a, b) => (a.validade === b.validade ? 0 : a.validade === null ? 1 : b.validade === null ? -1 : (a.validade < b.validade ? -1 : 1)));
+    const alvo = Math.max(0, Math.round(num(qtd)));
+    const soma = arr.reduce((s, l) => s + l.qtd, 0);
+    if (soma < alvo) {
+      const sem = arr.find((l) => l.validade === null);
+      if (sem) sem.qtd += alvo - soma; else arr.push({ validade: null, qtd: alvo - soma });
+    } else if (soma > alvo) {
+      let sobra = soma - alvo;
+      for (const l of arr) { const t = Math.min(l.qtd, sobra); l.qtd -= t; sobra -= t; if (!sobra) break; }
+      arr = arr.filter((l) => l.qtd > 0);
+    }
+    return arr;
+  }
+  const icone = (nome) => `<svg class="ic" aria-hidden="true"><use href="#i-${nome}"/></svg>`;
+  const notaHtml = (d) => (d ? `<span class="desc">${icone('nota')}<span>${esc(d)}</span></span>` : '');
+  const porNome = (a, b) => collator.compare(a.p.nome, b.p.nome);
+
+  const FRASES_LIMPEZA = PALAVRAS_LIMPEZA.split(',').map(normFrase).filter(Boolean);
+  function adivinharTipo(nome) {
+    const base = normFrase(nome);
+    if (!base) return 'alimento';
+    const a = ` ${base} `, b = ` ${singular(base)} `;
+    return FRASES_LIMPEZA.some((f) => a.includes(` ${f} `) || b.includes(` ${f} `)) ? 'limpeza' : 'alimento';
+  }
+  // Realça os trechos digitados, ignorando acentos ("acucar" acha "Açúcar").
+  function destacar(texto, termos) {
+    const chars = [...String(texto).normalize('NFC')];
+    let base = '';
+    const mapa = [];
+    chars.forEach((ch, i) => {
+      const n = ch.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+      for (let k = 0; k < n.length; k++) { base += n[k]; mapa.push(i); }
+    });
+    const marcado = new Array(chars.length).fill(false);
+    for (const t of termos) {
+      let de = 0, i;
+      while (t && (i = base.indexOf(t, de)) !== -1) { for (let k = i; k < i + t.length; k++) marcado[mapa[k]] = true; de = i + t.length; }
+    }
+    let html = '', aberto = false;
+    chars.forEach((ch, i) => {
+      if (marcado[i] && !aberto) { html += '<mark>'; aberto = true; }
+      if (!marcado[i] && aberto) { html += '</mark>'; aberto = false; }
+      html += esc(ch);
+    });
+    return aberto ? html + '</mark>' : html;
+  }
+
+  /* ================= Estado e gravação ================= */
+  // "server" é o que o banco tem neste aparelho (já com o que foi gravado aqui, mesmo sem internet);
+  // "local", o que esta tela acabou de mudar, até o banco refletir (alguns milissegundos).
+  const APAGADO = Symbol('apagado');
+  const CASA = 'principal';
+  const server = { produtos: new Map(), lista: new Map() };
+  const local = { produtos: new Map(), lista: new Map() };
+  const localEm = new Map();
+  const naFila = { produtos: false, lista: false };   // o banco ainda tem mudanças deste aparelho para enviar
+  const doCache = { produtos: true, lista: true };     // a última leitura veio só do aparelho, sem o servidor
+  let F = null, fs = null, auth = null, usuario = null;
+  let registro = null;
+  let gravacoes = 0;                                    // gravações enviadas e ainda não confirmadas
+
+  const ui = {
+    ro: false, carregado: false, lento: false, erroDados: '', temDados: false, fora: false,
+    pisca: new Set(), editando: null, confirmaEx: false, zeradosAberto: false, salvoEm: null, erroSalvar: false
+  };
+
+  // Aceita documentos da versão anterior (categoria, detalhe, comprado) sem quebrar.
+  function normProduto(r) {
+    const d = r || {};
+    let nome = limpo(d.nome) || 'Sem nome';
+    if (d.detalhe && !norm(nome).includes(norm(d.detalhe))) nome = `${nome} ${limpo(d.detalhe)}`;
+    const tipo = TIPOS.includes(d.tipo) ? d.tipo : (['Limpeza', 'Higiene'].includes(d.categoria) ? 'limpeza' : 'alimento');
+    const o = {
+      nome, descricao: limpo(d.descricao), tipo, qtd: Math.max(0, Math.round(num(d.qtd))), emUso: !!d.emUso, exemplo: !!d.exemplo,
+      criadoEm: d.criadoEm || null, atualizadoEm: d.atualizadoEm || null,
+      preco: num(d.preco) > 0 ? Math.round(num(d.preco) * 100) / 100 : null,
+      precoEm: num(d.preco) > 0 ? (d.precoEm || null) : null
+    };
+    o.lotes = ajustarLotes(d.lotes, o.qtd);
+    o.validadeEmUso = o.emUso && ehDataISO(d.validadeEmUso) ? d.validadeEmUso : null;
+    if (d.ultimaCompraEm) o.ultimaCompraEm = d.ultimaCompraEm;
+    return o;
+  }
+  function normItem(r) {
+    const d = r || {};
+    return {
+      produtoId: d.produtoId || null, nome: limpo(d.nome), qtd: Math.min(999, Math.max(1, Math.round(num(d.qtd, 1)))),
+      noCarrinho: !!(d.noCarrinho != null ? d.noCarrinho : d.comprado), exemplo: !!d.exemplo, criadoEm: d.criadoEm || null
+    };
+  }
+
+  function ler(col, id) {
+    if (!id) return null;
+    if (local[col].has(id)) { const v = local[col].get(id); return v === APAGADO ? null : v; }
+    return server[col].get(id) || null;
+  }
+  function todos(col) {
+    const m = new Map(server[col]);
+    for (const [id, v] of local[col]) { if (v === APAGADO) m.delete(id); else m.set(id, v); }
+    return m;
+  }
+  // Grava uma mudança. "dq" (opcional) diz que a quantidade fechada mudou por soma (abrir: -1; compra: +n).
+  // Ela vai ao banco como incremento: abrir num celular e cadastrar compra no outro, ao mesmo tempo, se somam.
+  function gravar(col, id, valor, dq) {
+    // Produto: os lotes sempre acompanham a quantidade guardada; a validade em uso só vale com produto aberto.
+    if (col === 'produtos' && valor) {
+      valor = { ...valor, lotes: ajustarLotes(valor.lotes, valor.qtd), validadeEmUso: valor.emUso && ehDataISO(valor.validadeEmUso) ? valor.validadeEmUso : null };
+    }
+    const antes = ler(col, id);
+    const soma = typeof dq === 'number' && dq !== 0 && antes ? dq : null;
+    const op = preparar(antes, valor, soma);
+    if (!op) return;
+    if (registro) {
+      const k = `${col}/${id}`;
+      let r = registro.get(k);
+      if (!r) { r = { col, id, antes, dq: 0, soma: true, campos: new Set(), apagado: false }; registro.set(k, r); }
+      if (op.tipo === 'apagar') r.apagado = true;
+      if (op.tipo === 'mudar') for (const c of Object.keys(op.dados)) r.campos.add(c);
+      if (soma) r.dq += soma; else if (op.tipo !== 'mudar' || 'qtd' in op.dados) r.soma = false;
+    }
+    local[col].set(id, valor === null ? APAGADO : valor);
+    localEm.set(`${col}/${id}`, Date.now());
+    enviar(col, id, op);
+    agendar();
+  }
+  // Agrupa as gravações de uma ação e devolve a função que desfaz tudo.
+  // Desfazer volta só os campos que a ação mudou, e a quantidade que mudou por soma volta por subtração:
+  // o que o outro celular fez no meio-tempo continua valendo.
+  function transacao(fn) {
+    const anterior = registro;
+    registro = new Map();
+    let log;
+    try { fn(); } finally { log = registro; registro = anterior; }
+    return () => {
+      transacao(() => {
+        for (const r of log.values()) {
+          const atual = ler(r.col, r.id);
+          if (!r.antes) { if (atual) gravar(r.col, r.id, null); continue; }
+          if (!atual) { if (r.apagado) gravar(r.col, r.id, r.antes); continue; }
+          if (r.apagado) { gravar(r.col, r.id, r.antes); continue; }
+          const v = { ...atual };
+          for (const c of r.campos) {
+            if (c === 'qtd') continue;
+            if (c in r.antes) v[c] = r.antes[c]; else delete v[c];
+          }
+          if (r.soma && r.dq) { v.qtd = Math.max(0, atual.qtd - r.dq); gravar(r.col, r.id, v, -r.dq); }
+          else { if (r.campos.has('qtd')) v.qtd = r.antes.qtd; gravar(r.col, r.id, v); }
+        }
+      });
+      toast('Desfeito.');
+    };
+  }
+
+  const paraGravar = (v) => JSON.parse(JSON.stringify(v));
+  const igual = (a, b) => JSON.stringify(a === undefined ? null : a) === JSON.stringify(b === undefined ? null : b);
+  // Só o que mudou vai para o banco: o que o outro celular alterou em outros campos continua valendo.
+  function preparar(antes, valor, soma) {
+    if (valor === null) return antes ? { tipo: 'apagar' } : null;
+    if (!antes) return { tipo: 'criar', dados: paraGravar(valor) };
+    const dados = {};
+    for (const k of new Set([...Object.keys(antes), ...Object.keys(valor)])) {
+      if (!igual(antes[k], valor[k])) dados[k] = valor[k] === undefined ? undefined : paraGravar(valor[k]);
+    }
+    if (soma) delete dados.qtd;
+    return Object.keys(dados).length || soma ? { tipo: 'mudar', dados, soma } : null;
+  }
+  function enviar(col, id, op) {
+    if (!fs) return;
+    let p;
+    try {
+      const ref = F.doc(fs, 'casas', CASA, col, id);
+      if (op.tipo === 'apagar') p = F.deleteDoc(ref);
+      else if (op.tipo === 'criar') p = F.setDoc(ref, op.dados);
+      else {
+        const d = {};
+        for (const [k, v] of Object.entries(op.dados)) d[k] = v === undefined ? F.deleteField() : v;
+        if (op.soma) d.qtd = F.increment(op.soma);
+        p = F.updateDoc(ref, d);
+      }
+    } catch (e) {
+      local[col].delete(id);
+      erroGravacao(e);
+      return;
+    }
+    acompanhar(p, () => local[col].delete(id));
+  }
+  // Conta o que foi enviado e ainda não chegou ao servidor (sem internet, fica na fila do aparelho).
+  function acompanhar(p, aoFalhar) {
+    gravacoes++;
+    p.then(() => { ui.salvoEm = new Date(); ui.erroSalvar = false; })
+      .catch((e) => { if (aoFalhar) aoFalhar(); ui.erroSalvar = true; erroGravacao(e); })
+      .finally(() => { gravacoes--; agendar(); });
+  }
+  function erroGravacao(e) {
+    const c = codigo(e);
+    if (c === 'permission-denied') semAcesso();
+    else if (c === 'not-found') toast('Este produto foi excluído em outro aparelho.');
+    else if (c === 'resource-exhausted') toast('O limite diário gratuito do banco de dados foi atingido. Amanhã volta ao normal.');
+    else toast('Não foi possível salvar. Verifique a conexão e tente de novo.');
+  }
+
+  /* ================= Regras ================= */
+  // Despensa = unidades fechadas (qtd). Cozinha = há uma aberta em uso (emUso), sem quantidade.
+  // Lista = itens marcados para comprar; o id do item é o id do produto.
+  function acharPorNome(nome, exceto) {
+    const n = norm(nome);
+    for (const [id, p] of todos('produtos')) if (id !== exceto && norm(p.nome) === n) return id;
+    return null;
+  }
+  const novoItem = (id, p, qtd) => ({ produtoId: id, nome: p.nome, qtd: lerQtd(qtd), noCarrinho: false, exemplo: !!p.exemplo, criadoEm: agora() });
+  function lerQtd(v) { return Math.min(999, Math.max(1, Math.round(num(v, 1)))); }
+
+  function abrir(id) {
+    const p = ler('produtos', id);
+    if (!p || p.qtd <= 0) return;
+    // Abre primeiro o que vence antes: a validade do primeiro lote passa a ser a do produto em uso.
+    const lotes = ajustarLotes(p.lotes, p.qtd);
+    const vence = lotes.length ? lotes[0].validade : null;
+    const desfazer = transacao(() => gravar('produtos', id, { ...p, qtd: p.qtd - 1, lotes, emUso: true, validadeEmUso: vence, atualizadoEm: agora() }, -1));
+    piscar('c:' + id);
+    if (p.qtd - 1 === 0 && !ler('lista', id)) perguntarLista(id, desfazer, 'abriu');
+    else toast(`${p.nome} passou para Em uso.`, ['Desfazer', desfazer]);
+  }
+  function acabou(id) {
+    const p = ler('produtos', id);
+    if (!p || !p.emUso) return;
+    const desfazer = transacao(() => gravar('produtos', id, { ...p, emUso: false, validadeEmUso: null, atualizadoEm: agora() }));
+    if (!ler('lista', id)) { perguntarLista(id, desfazer, 'acabou'); return; }
+    const acoes = p.qtd > 0 ? [['Abrir outro', () => abrir(id)]] : [];
+    toast(`${p.nome} saiu de Em uso. Já está na lista de compras.`, ...acoes, ['Desfazer', desfazer]);
+  }
+  function alternarLista(id) {
+    const p = ler('produtos', id);
+    if (!p) return;
+    if (ler('lista', id)) {
+      const desfazer = transacao(() => gravar('lista', id, null));
+      toast(`${p.nome} saiu da lista de compras.`, ['Desfazer', desfazer]);
+    } else {
+      perguntarLista(id, null, 'manual');
+    }
+  }
+  function marcar(iid) {
+    const it = ler('lista', iid);
+    if (!it) return;
+    transacao(() => gravar('lista', iid, { ...it, noCarrinho: !it.noCarrinho }));
+  }
+  function removerItem(iid) {
+    const it = ler('lista', iid);
+    if (!it) return;
+    const p = it.produtoId ? ler('produtos', it.produtoId) : null;
+    const desfazer = transacao(() => gravar('lista', iid, null));
+    toast(`${p ? p.nome : it.nome} saiu da lista.`, ['Desfazer', desfazer]);
+  }
+  function adicionarNaLista(o) {
+    if (ui.ro) return;
+    if (o.tipo === 'produto') {
+      const p = ler('produtos', o.id);
+      if (!p) return;
+      perguntarLista(o.id, null, ler('lista', o.id) ? 'repetido' : 'manual');
+      return;
+    }
+    const existente = acharPorNome(o.nome);
+    if (existente) { adicionarNaLista({ tipo: 'produto', id: existente }); return; }
+    abrirNovoProduto(o.nome, o.tipoProduto);
+  }
+  function excluirProduto(id) {
+    const p = ler('produtos', id);
+    if (!p) return;
+    const desfazer = transacao(() => { gravar('produtos', id, null); if (ler('lista', id)) gravar('lista', id, null); });
+    toast(`Produto excluído da base: ${p.nome}.`, ['Desfazer', desfazer]);
+  }
+  // Para produto posto na despensa por engano: zera o estoque, mas o produto continua na base.
+  function tirarDaDespensa(id) {
+    const p = ler('produtos', id);
+    if (!p || p.qtd <= 0) return;
+    const desfazer = transacao(() => gravar('produtos', id, { ...p, qtd: 0, atualizadoEm: agora() }));
+    toast(`${p.nome} saiu da despensa. Continua na base de produtos.`, ['Desfazer', desfazer]);
+  }
+  function apagarExemplos() {
+    if (!ui.confirmaEx) {
+      ui.confirmaEx = true;
+      agendar();
+      setTimeout(() => { ui.confirmaEx = false; agendar(); }, 4000);
+      return;
+    }
+    ui.confirmaEx = false;
+    const ids = new Set([...todos('produtos')].filter(([, p]) => p.exemplo).map(([id]) => id));
+    const desfazer = transacao(() => {
+      for (const id of ids) gravar('produtos', id, null);
+      for (const [iid, it] of todos('lista')) if (it.produtoId ? ids.has(it.produtoId) : it.exemplo) gravar('lista', iid, null);
+    });
+    toast('Exemplos apagados. A despensa está pronta para os seus produtos.', ['Desfazer', desfazer]);
+  }
+
+  /* ---------- Pôr na lista: sempre pergunta a quantidade ---------- */
+  // Motivos: abriu/zerou (despensa zerou), acabou (cozinha), manual (pôr na lista),
+  // repetido (escolheu na busca um produto que já está na lista), editar (tocou na quantidade).
+  let zero = null;
+  const PERGUNTA_ACABOU = ['abriu', 'zerou', 'acabou'];
+  function perguntarLista(id, desfazer, motivo) {
+    const p = ler('produtos', id);
+    if (!p) return;
+    const item = ler('lista', id);
+    zero = { id, desfazer, motivo, nome: p.nome, qtd: p.qtd };
+    const nome = `<b>${esc(p.nome)}</b>`;
+    const textos = {
+      abriu: ['Acabou na despensa', `Você abriu o último ${nome} da despensa. Ele passou para Em uso. Quer pôr na lista de compras?`],
+      zerou: ['Acabou na despensa', `${nome} ficou sem estoque na despensa. Quer pôr na lista de compras?`],
+      acabou: ['Acabou', `${nome} acabou. ${p.qtd > 0 ? `Ainda há ${p.qtd} na despensa.` : 'Não há mais na despensa.'} Quer pôr na lista de compras?`],
+      manual: ['Pôr na lista', `Quantas unidades de ${nome} você quer comprar?`],
+      repetido: ['Já está na lista', `${nome} já está na lista de compras. Quer mudar a quantidade?`],
+      editar: ['Quantidade na lista', `Quantas unidades de ${nome} você quer comprar?`]
+    };
+    const [titulo, texto] = textos[motivo] || textos.manual;
+    el.dzTit.textContent = titulo;
+    el.dzTxt.innerHTML = texto;
+    el.dzDesc.innerHTML = notaHtml(p.descricao);
+    el.dzN.value = String(item ? item.qtd || 1 : 1);
+    el.dzNao.textContent = PERGUNTA_ACABOU.includes(motivo) ? 'Agora não' : 'Cancelar';
+    el.dzSim.textContent = motivo === 'repetido' || motivo === 'editar' ? 'Salvar' : 'Pôr na lista';
+    atualizarDz();
+    abrirDialogo(el.dlgZero);
+    if (PERGUNTA_ACABOU.includes(motivo)) focarDepois(el.dlgZero, el.dzSim);
+    else focarDepois(el.dlgZero, el.dzN, true);
+  }
+  function atualizarDz() {
+    const n = lerQtd(el.dzN.value);
+    el.dzMenos.disabled = n <= 1;
+    const p = zero ? ler('produtos', zero.id) : null;
+    el.dzValor.textContent = p && p.preco > 0 ? `${n} × ${fmtR(p.preco)} = ${fmtR(n * p.preco)}` : 'Sem preço registrado ainda.';
+  }
+  const abrirOutro = (z) => (z.motivo === 'acabou' && z.qtd > 0 ? [['Abrir outro', () => abrir(z.id)]] : []);
+  function responderZero(sim) {
+    const z = zero;
+    zero = null;
+    const n = lerQtd(el.dzN.value);
+    fecharDialogo(el.dlgZero);
+    if (!z) return;
+    if (sim) {
+      const p = ler('produtos', z.id);
+      const it = ler('lista', z.id);
+      let desfazerLista = null;
+      if (p && (!it || it.qtd !== n)) {
+        desfazerLista = transacao(() => gravar('lista', z.id, it ? { ...it, qtd: n } : novoItem(z.id, p, n)));
+        piscar('l:' + z.id);
+      }
+      if (!desfazerLista && !z.desfazer) return;
+      const tudo = () => { if (desfazerLista) desfazerLista(); if (z.desfazer) z.desfazer(); };
+      const msg = {
+        abriu: `${z.nome} passou para Em uso. Na lista: ${n}.`,
+        acabou: `${z.nome} saiu de Em uso. Na lista: ${n}.`,
+        repetido: `${z.nome}: agora ${n} na lista.`,
+        editar: `${z.nome}: agora ${n} na lista.`
+      }[z.motivo] || `${z.nome} entrou na lista: ${n}.`;
+      toast(msg, ...abrirOutro(z), ['Desfazer', tudo]);
+    } else if (z.desfazer) {
+      const msg = { abriu: `${z.nome} passou para Em uso.`, acabou: `${z.nome} saiu de Em uso.` }[z.motivo] || 'Produto atualizado.';
+      toast(msg, ...abrirOutro(z), ['Desfazer', z.desfazer]);
+    }
+  }
+
+  /* ---------- Cadastrar compra ---------- */
+  const compra = { linhas: [] };
+  function addLinhaProduto(id) {
+    if (!ler('produtos', id)) return;
+    const ja = compra.linhas.find((l) => l.produtoId === id);
+    if (ja) { ja.qtd++; return; }
+    const naLista = ler('lista', id);
+    compra.linhas.push({ chave: novoId('l'), produtoId: id, novo: null, qtd: naLista ? naLista.qtd || 1 : 1 });
+  }
+  function addLinhaNovo(nome, tipo) {
+    const existente = acharPorNome(nome);
+    if (existente) { addLinhaProduto(existente); return null; }
+    const ja = compra.linhas.find((l) => l.novo && norm(l.novo.nome) === norm(nome));
+    if (ja) { ja.qtd++; return ja.chave; }
+    const chave = novoId('l');
+    compra.linhas.push({ chave, produtoId: null, novo: { nome, tipo, descricao: '' }, qtd: 1 });
+    return chave;
+  }
+  function abrirCompra(ids) {
+    compra.linhas = [];
+    el.compraErro.hidden = true;
+    for (const id of ids) addLinhaProduto(id);
+    el.buscaCompra.value = '';
+    buscaCompra.fechar();
+    desenharCompra();
+    abrirDialogo(el.dlgCompra);
+    if (!ids.length) focarDepois(el.dlgCompra, el.buscaCompra);
+  }
+  function salvarCompra() {
+    if (ui.ro || !compra.linhas.length) return;
+    const ruim = compra.linhas.findIndex((l) => Number.isNaN(lerPreco(l.precoTxt)));
+    if (ruim >= 0) {
+      const l = compra.linhas[ruim];
+      const pr = l.produtoId ? ler('produtos', l.produtoId) : null;
+      el.compraErro.textContent = `Confira o preço de ${pr ? pr.nome : l.novo.nome}: use só números, como 5,49.`;
+      el.compraErro.hidden = false;
+      const campo = el.compraLinhas.querySelector(`input[data-preco="${ruim}"]`);
+      if (campo) { campo.setAttribute('aria-invalid', 'true'); campo.focus(); }
+      return;
+    }
+    let n = 0, novos = 0, total = 0;
+    const desfazer = transacao(() => {
+      for (const l of compra.linhas) {
+        let id = l.produtoId;
+        let p = id ? ler('produtos', id) : null;
+        const descNova = l.novo ? limpo(l.novo.descricao) : '';
+        if (!p) {
+          const nome = l.novo ? l.novo.nome : '';
+          if (!nome) continue;
+          id = acharPorNome(nome);
+          p = id ? ler('produtos', id) : null;
+          if (!p) {
+            id = novoId('p');
+            p = { nome, descricao: descNova, tipo: l.novo.tipo, qtd: 0, emUso: false, exemplo: false, criadoEm: agora(), atualizadoEm: agora() };
+            novos++;
+          }
+        }
+        const q = Math.max(1, Math.round(l.qtd));
+        const lotes = [...ajustarLotes(p.lotes, p.qtd), { validade: ehDataISO(l.validade) ? l.validade : null, qtd: q }];
+        const novo = { ...p, qtd: p.qtd + q, lotes, atualizadoEm: agora(), ultimaCompraEm: agora() };
+        if (descNova && !novo.descricao) novo.descricao = descNova;
+        const v = lerPreco(l.precoTxt);
+        if (v > 0) { novo.preco = v; novo.precoEm = agora(); total += v * q; }
+        gravar('produtos', id, novo, q);
+        if (ler('lista', id)) gravar('lista', id, null);
+        piscar('p:' + id);
+        n++;
+      }
+    });
+    fecharDialogo(el.dlgCompra);
+    if (!n) return;
+    toast(`Compra cadastrada: ${plural(n, 'produto', 'produtos')}${novos ? ` (${novos} ${novos === 1 ? 'novo' : 'novos'} na base)` : ''}${total > 0 ? ` · ${fmtR(total)}` : ''}.`, ['Desfazer', desfazer]);
+  }
+
+  /* ---------- Copiar lista ---------- */
+  function textoLista() {
+    const prods = todos('produtos');
+    const xs = [...todos('lista')].filter(([, it]) => !it.noCarrinho).map(([, it]) => {
+      const p = it.produtoId ? prods.get(it.produtoId) : null;
+      return { nome: p ? p.nome : it.nome, desc: p ? p.descricao : '', tipo: p ? p.tipo : 'alimento', preco: p && p.preco > 0 ? p.preco : 0, n: it.qtd || 1 };
+    });
+    if (!xs.length) return '';
+    const linhas = [`Lista de compras (${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })})`];
+    for (const t of TIPOS) {
+      const g = xs.filter((x) => x.tipo === t).sort((a, b) => collator.compare(a.nome, b.nome));
+      if (!g.length) continue;
+      linhas.push('', `*${TITULO_TIPO[t]}*`, ...g.map((x) => `- ${x.n}× ${x.nome}${x.desc ? ` (${x.desc})` : ''}${x.preco ? ` · ${fmtR(x.preco * x.n)}` : ''}`));
+    }
+    const comPreco = xs.filter((x) => x.preco > 0);
+    if (comPreco.length) {
+      const sem = xs.length - comPreco.length;
+      linhas.push('', `Valor estimado: ${fmtR(comPreco.reduce((s, x) => s + x.preco * x.n, 0))}${sem ? ` (${plural(sem, 'item', 'itens')} sem preço)` : ''}`);
+    }
+    return linhas.join('\n');
+  }
+  // Leva os dados deste navegador para o app compartilhado: baixa temai-dados.json.
+  function exportarDados() {
+    const dados = {
+      formato: 'temai-1', exportadoEm: agora(),
+      produtos: Object.fromEntries(todos('produtos')), lista: Object.fromEntries(todos('lista'))
+    };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'temai-dados.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    toast(`Cópia salva: ${plural(Object.keys(dados.produtos).length, 'produto', 'produtos')} e ${plural(Object.keys(dados.lista).length, 'item', 'itens')} da lista, no arquivo temai-dados.json.`);
+  }
+  async function copiarLista() {
+    const texto = textoLista();
+    if (!texto) { toast('Não há nada para comprar na lista.'); return; }
+    try {
+      await navigator.clipboard.writeText(texto);
+      toast('Lista copiada. É só colar no WhatsApp ou onde preferir.');
+    } catch (e) {
+      el.dkTxt.value = texto;
+      abrirDialogo(el.dlgCopiar);
+      el.dkTxt.focus();
+      el.dkTxt.select();
+    }
+  }
+
+  /* ================= Interface ================= */
+  const el = {
+    hoje: $('#hoje'), sync: $('#sync'), avisos: $('#avisos'), exemplos: $('#exemplos'),
+    conta: $('#conta'), contaIni: $('#conta-ini'), portao: $('#portao'), portaoTit: $('#portao-tit'), portaoTxt: $('#portao-txt'),
+    portaoBtn: $('#portao-btn'), portaoBtn2: $('#portao-btn2'), portaoErro: $('#portao-erro'), portaoNota: $('#portao-nota'),
+    dlgConta: $('#dlg-conta'), contaEmail: $('#conta-email'), btnInstalar: $('#btn-instalar'), contaDica: $('#conta-dica'),
+    contaPendente: $('#conta-pendente'), contaVersao: $('#conta-versao'), btnSair: $('#btn-sair'), btnSairTxt: $('#btn-sair-txt'),
+    dlgImportar: $('#dlg-importar'), formImportar: $('#form-importar'), dimTxt: $('#dim-txt'), arquivo: $('#arquivo'),
+    aDespensa: $('#a-despensa'), aCozinha: $('#a-cozinha'), aLista: $('#a-lista'),
+    subDespensa: $('#sub-despensa'), subCozinha: $('#sub-cozinha'), subLista: $('#sub-lista'),
+    corpoDespensa: $('#corpo-despensa'), corpoCozinha: $('#corpo-cozinha'), corpoLista: $('#corpo-lista'),
+    buscaLista: $('#busca-lista'), resLista: $('#res-lista'), peLista: $('#pe-lista'), btnCompraLista: $('#btn-compra-lista'),
+    estimativa: $('#estimativa'), estValor: $('#est-valor'), estNota: $('#est-nota'),
+    dlgCompra: $('#dlg-compra'), formCompra: $('#form-compra'), buscaCompra: $('#busca-compra'), resCompra: $('#res-compra'),
+    compraDaLista: $('#compra-da-lista'), compraLinhas: $('#compra-linhas'), compraVazia: $('#compra-vazia'), compraSalvar: $('#compra-salvar'),
+    compraErro: $('#compra-erro'), compraTotal: $('#compra-total'),
+    dlgZero: $('#dlg-zero'), dzTit: $('#dz-tit'), dzTxt: $('#dz-txt'), dzSim: $('#dz-sim'), dzNao: $('#dz-nao'),
+    formZero: $('#form-zero'), dzN: $('#dz-n'), dzMenos: $('#dz-menos'), dzValor: $('#dz-valor'), dzDesc: $('#dz-desc'),
+    dlgProduto: $('#dlg-produto'), formProduto: $('#form-produto'), dpTit: $('#dp-tit'), fpNome: $('#fp-nome'), fpDesc: $('#fp-desc'), fpTipo: $('#fp-tipo'),
+    fpQtd: $('#fp-qtd'), fpQtdCampo: $('#fp-qtd-campo'), fpUso: $('#fp-uso'), fpUsoCampo: $('#fp-uso-campo'),
+    fpErro: $('#fp-erro'), fpExcluir: $('#fp-excluir'), fpSalvar: $('#fp-salvar'),
+    fpPreco: $('#fp-preco'), fpPrecoCampo: $('#fp-preco-campo'), fpPrecoInfo: $('#fp-preco-info'),
+    fpListaQtd: $('#fp-listaqtd'), fpListaQtdCampo: $('#fp-listaqtd-campo'), fpLotes: $('#fp-lotes'), fpLotesCampo: $('#fp-lotes-campo'),
+    dlgCopiar: $('#dlg-copiar'), dkTxt: $('#dk-txt'),
+    toast: $('#toast'), toastMsg: $('#toast-msg'), toastAcoes: $('#toast-acoes')
+  };
+
+  let pendente = false;
+  function agendar() {
+    if (pendente) return;
+    pendente = true;
+    queueMicrotask(() => { pendente = false; desenhar(); });
+  }
+  function piscar(chave) { ui.pisca.add(chave); setTimeout(() => ui.pisca.delete(chave), 1900); }
+  const pisca = (chave) => (ui.pisca.has(chave) ? ' pisca' : '');
+
+  let toastTimer = 0;
+  function toast(msg, ...acoes) {
+    el.toastMsg.textContent = msg;
+    el.toastAcoes.replaceChildren();
+    for (const [rotulo, fn] of acoes) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'toast-acao';
+      b.textContent = rotulo;
+      b.addEventListener('click', () => { esconderToast(); fn(); });
+      el.toastAcoes.appendChild(b);
+    }
+    el.toast.hidden = false;
+    el.toast.style.animation = 'none';
+    void el.toast.offsetWidth;
+    el.toast.style.animation = '';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(esconderToast, acoes.length ? 7000 : 4000);
+  }
+  function esconderToast() { clearTimeout(toastTimer); el.toast.hidden = true; }
+  function abrirDialogo(d) {
+    if (d.open) return;
+    try { d.showModal(); } catch (e) { d.classList.add('sem-modal'); d.setAttribute('open', ''); }
+  }
+  // Foco inicial de uma folha, sem tirar o cursor de um campo que a pessoa já tocou.
+  function focarDepois(dlg, alvo, selecionar) {
+    setTimeout(() => {
+      const a = document.activeElement;
+      if (!dlg.open || (a && a !== alvo && dlg.contains(a) && a.matches('input, textarea'))) return;
+      alvo.focus();
+      if (selecionar && typeof alvo.select === 'function') alvo.select();
+    }, 40);
+  }
+  function fecharDialogo(d) {
+    if (typeof d.close === 'function' && d.open) d.close(); else d.removeAttribute('open');
+  }
+  // Redesenha mantendo o foco no mesmo controle (os ids de foco ficam em data-k).
+  function comFoco(fn) {
+    const ativo = document.activeElement;
+    const k = ativo && ativo.dataset ? ativo.dataset.k : null;
+    let sel = null;
+    try { if (ativo && typeof ativo.selectionStart === 'number') sel = [ativo.selectionStart, ativo.selectionEnd]; } catch (e) { /* sem seleção */ }
+    fn();
+    if (k && (!document.activeElement || document.activeElement.dataset.k !== k)) {
+      const alvo = document.querySelector(`[data-k="${CSS.escape(k)}"]`);
+      if (alvo && alvo !== ativo) {
+        alvo.focus({ preventScroll: true });
+        if (sel && typeof alvo.setSelectionRange === 'function') { try { alvo.setSelectionRange(sel[0], sel[1]); } catch (e) { /* sem seleção */ } }
+      }
+    }
+  }
+
+  /* ---------- Busca dinâmica na base de produtos ---------- */
+  function criarBusca(input, painel, aoEscolher) {
+    let opcoes = [], ativo = -1, termos = [], ultimoEsc = 0;
+    function fechar() {
+      opcoes = []; ativo = -1;
+      painel.hidden = true; painel.innerHTML = '';
+      input.setAttribute('aria-expanded', 'false');
+      input.removeAttribute('aria-activedescendant');
+    }
+    function calcular() {
+      const bruto = limpo(input.value);
+      termos = norm(bruto).split(' ').filter(Boolean);
+      if (!termos.length) { fechar(); return; }
+      const achados = [...todos('produtos')]
+        .filter(([, p]) => { const n = norm(p.nome); return termos.every((t) => n.includes(t)); })
+        .sort((a, b) => {
+          const ia = norm(a[1].nome).startsWith(termos[0]) ? 0 : 1, ib = norm(b[1].nome).startsWith(termos[0]) ? 0 : 1;
+          return (ia - ib) || collator.compare(a[1].nome, b[1].nome);
+        });
+      opcoes = achados.map(([id, p]) => ({ tipo: 'produto', id, p }));
+      if (!achados.some(([, p]) => norm(p.nome) === norm(bruto))) {
+        const nome = capitalizar(bruto);
+        opcoes.push({ tipo: 'novo', nome, tipoProduto: adivinharTipo(nome) });
+      }
+      ativo = 0;
+      pintar();
+    }
+    function pintar() {
+      const itens = todos('lista');
+      let html = '', separou = false;
+      opcoes.forEach((o, i) => {
+        const sel = i === ativo;
+        if (o.tipo === 'produto') {
+          const p = o.p;
+          const partes = [NOME_TIPO[p.tipo], p.qtd > 0 ? `${p.qtd} na despensa` : 'sem estoque'];
+          if (p.emUso) partes.push('em uso');
+          if (itens.has(o.id)) partes.push(`na lista (${itens.get(o.id).qtd || 1})`);
+          html += `<li class="op" role="option" id="${painel.id}-${i}" data-i="${i}" aria-selected="${sel}"><span class="op-nome"><span>${destacar(p.nome, termos)}</span></span>${notaHtml(p.descricao)}<span class="op-meta">${esc(partes.join(' · '))}</span></li>`;
+        } else {
+          if (!separou && i > 0) html += '<li class="op-sep" role="presentation"></li>';
+          separou = true;
+          html += `<li class="op op-novo" role="option" id="${painel.id}-${i}" data-i="${i}" aria-selected="${sel}"><span class="op-nome">${icone('mais')}<span>Cadastrar “${esc(o.nome)}”</span></span><span class="op-meta">novo produto</span></li>`;
+        }
+      });
+      painel.innerHTML = html;
+      painel.hidden = !opcoes.length;
+      input.setAttribute('aria-expanded', String(opcoes.length > 0));
+      if (ativo >= 0 && opcoes.length) input.setAttribute('aria-activedescendant', `${painel.id}-${ativo}`);
+      else input.removeAttribute('aria-activedescendant');
+    }
+    function mover(d) {
+      if (!opcoes.length) return;
+      ativo = (ativo + d + opcoes.length) % opcoes.length;
+      pintar();
+      const li = painel.querySelector(`[data-i="${ativo}"]`);
+      if (li) li.scrollIntoView({ block: 'nearest' });
+    }
+    function escolher(i) {
+      const o = opcoes[i];
+      if (!o) return;
+      input.value = '';
+      fechar();
+      aoEscolher(o);
+    }
+    input.addEventListener('input', calcular);
+    input.addEventListener('focus', () => { if (limpo(input.value)) calcular(); });
+    input.addEventListener('blur', () => setTimeout(() => { if (document.activeElement !== input) fechar(); }, 150));
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') { e.preventDefault(); mover(1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); mover(-1); }
+      else if (e.key === 'Enter') { e.preventDefault(); if (!painel.hidden && ativo >= 0) escolher(ativo); }
+      else if (e.key === 'Escape' && !painel.hidden) { e.preventDefault(); e.stopPropagation(); ultimoEsc = Date.now(); fechar(); }
+    });
+    painel.addEventListener('pointerdown', (e) => e.preventDefault());
+    painel.addEventListener('click', (e) => { const li = e.target.closest('[data-i]'); if (li) escolher(Number(li.dataset.i)); });
+    return { fechar, recalcular: () => { if (!painel.hidden) calcular(); }, escAgora: () => Date.now() - ultimoEsc < 300 };
+  }
+  const buscaLista = criarBusca(el.buscaLista, el.resLista, adicionarNaLista);
+  const buscaCompra = criarBusca(el.buscaCompra, el.resCompra, (o) => {
+    if (o.tipo === 'produto') { addLinhaProduto(o.id); desenharCompra(); el.buscaCompra.focus(); return; }
+    const chave = addLinhaNovo(o.nome, o.tipoProduto);
+    desenharCompra();
+    const campo = chave ? document.getElementById('lcd-' + chave) : null;
+    if (campo) campo.focus(); else el.buscaCompra.focus();
+  });
+
+  /* ---------- Desenho ---------- */
+  function blocoNome(pid, p, meta, ctx) {
+    const ex = p.exemplo ? '<span class="tag-ex">exemplo</span>' : '';
+    const dentro = `<span class="nome">${esc(p.nome)}${ex}</span>${notaHtml(p.descricao)}${meta || ''}`;
+    if (ui.ro || !pid) return `<div class="linha-nome">${dentro}</div>`;
+    return `<button class="linha-nome" type="button" data-acao="editar" data-id="${esc(pid)}" data-k="ed-${ctx}-${esc(pid)}"><span class="vh">Editar </span>${dentro}</button>`;
+  }
+  function porTipo(xs, fn) {
+    return TIPOS.map((t) => [t, xs.filter((x) => x.p.tipo === t).sort(porNome)])
+      .filter(([, g]) => g.length)
+      .map(([t, g]) => `<div class="grupo"><p class="grupo-tit">${TITULO_TIPO[t]}</p><ul class="linhas">${g.map(fn).join('')}</ul></div>`)
+      .join('');
+  }
+  const vazio = (tit, txt) => `<div class="vazio">${tit ? `<p class="vazio-tit">${tit}</p>` : ''}<p>${txt}</p></div>`;
+
+  // Validade mais próxima do que está guardado (e quantos têm essa data).
+  function metaValidade(lotes, total) {
+    const comData = (lotes || []).filter((l) => l.validade);
+    if (!comData.length) return '';
+    const info = infoValidade(comData[0].validade);
+    const parte = comData[0].qtd < total ? ` · ${comData[0].qtd} de ${total}` : '';
+    return `<span class="meta ${info.cls}">${esc(info.txt)}${parte}</span>`;
+  }
+  function linhaDespensa(x, itens) {
+    const it = itens.get(x.id);
+    const meta = metaValidade(x.p.lotes, x.p.qtd) + (it ? `<span class="meta meta-lista">Na lista de compras (${it.qtd || 1})</span>` : '');
+    return `<li class="linha${pisca('p:' + x.id)}" data-id="${esc(x.id)}">
+      <div class="nome-bloco">
+        <div class="nome-linha">
+          ${ui.ro
+            ? `<span class="nome">${esc(x.p.nome)}${x.p.exemplo ? '<span class="tag-ex">exemplo</span>' : ''}</span>`
+            : `<button class="nome-btn" type="button" data-acao="editar" data-k="ed-d-${esc(x.id)}"><span class="vh">Editar </span><span class="nome">${esc(x.p.nome)}</span>${x.p.exemplo ? '<span class="tag-ex">exemplo</span>' : ''}</button>`}
+          <button class="rm so-edicao" type="button" data-acao="tirar" data-k="ti-${esc(x.id)}" aria-label="Tirar ${esc(x.p.nome)} da despensa" title="Tirar da despensa (continua na base)">${icone('x')}</button>
+        </div>
+        ${notaHtml(x.p.descricao)}${meta}
+      </div>
+      <span class="qtd" title="Fechados na despensa" aria-label="${x.p.qtd} na despensa">${x.p.qtd}</span>
+      <button class="btn btn-mini so-edicao" type="button" data-acao="abrir" data-k="ab-${esc(x.id)}">Abrir</button>
+    </li>`;
+  }
+  function linhaZerada(x, itens) {
+    const it = itens.get(x.id);
+    const naLista = !!it;
+    const rotuloNa = naLista ? `Na lista · ${it.qtd || 1}` : '';
+    const meta = x.p.emUso ? '<span class="meta meta-uso">Em uso</span>' : '';
+    const marca = ui.ro
+      ? `<span class="marca-lista${naLista ? ' on' : ''}">${naLista ? rotuloNa : 'Fora da lista'}</span>`
+      : `<button class="marca-lista${naLista ? ' on' : ''}" type="button" data-acao="lista" data-k="ml-${esc(x.id)}" aria-pressed="${naLista}">${naLista ? icone('check') + rotuloNa : icone('mais') + 'Pôr na lista'}</button>`;
+    return `<li class="linha linha-zero${pisca('p:' + x.id)}" data-id="${esc(x.id)}">${blocoNome(x.id, x.p, meta, 'z')}${marca}</li>`;
+  }
+  function linhaCozinha(x, itens) {
+    const iv = infoValidade(x.p.validadeEmUso);
+    const meta = (iv ? `<span class="meta ${iv.cls}">${esc(iv.txt)}</span>` : '') + (x.p.qtd > 0
+      ? `<span class="meta">Despensa: ${x.p.qtd}</span>`
+      : `<span class="meta">Despensa vazia${itens.has(x.id) ? ' · <span class="meta-lista">na lista</span>' : ''}</span>`);
+    return `<li class="linha linha-cozinha${pisca('c:' + x.id)}" data-id="${esc(x.id)}">${blocoNome(x.id, x.p, meta, 'c')}<button class="btn btn-mini so-edicao" type="button" data-acao="acabou" data-k="ac-${esc(x.id)}">Acabou</button></li>`;
+  }
+  function linhaLista(x) {
+    const { id, it, p, orfao } = x;
+    let meta = '';
+    if (!orfao && p.emUso) meta = '<span class="meta meta-uso">Em uso</span>';
+    else if (!orfao && p.qtd > 0) meta = `<span class="meta">Ainda há ${p.qtd} na despensa</span>`;
+    const n = it.qtd || 1;
+    const chip = ui.ro || orfao
+      ? `<span class="qtd-lista">${n}×</span>`
+      : `<button class="qtd-lista" type="button" data-acao="qtd-item" data-k="qi-${esc(id)}" aria-label="Quantidade: ${n}. Mudar" title="Mudar a quantidade">${n}×</button>`;
+    return `<li class="linha linha-lista${it.noCarrinho ? ' feito' : ''}${pisca('l:' + id)}" data-item="${esc(id)}">
+      <button class="check" type="button" data-acao="marcar" data-k="ck-${esc(id)}" aria-pressed="${it.noCarrinho}" aria-label="${it.noCarrinho ? 'Tirar do carrinho' : 'Pôr no carrinho'}: ${esc(p.nome)}"${ui.ro ? ' disabled' : ''}><span class="check-caixa">${icone('check')}</span></button>
+      ${blocoNome(orfao ? null : it.produtoId, p, meta, 'l')}
+      ${chip}
+      ${p.preco > 0
+        ? `<span class="preco" title="Último preço por unidade${p.precoEm ? `, em ${fmtData(p.precoEm)}` : ''}">${fmtR(p.preco * n)}${n > 1 ? `<small>${n} × ${fmtR(p.preco)}</small>` : ''}</span>`
+        : '<span class="preco preco-sem">sem preço</span>'}
+      <button class="x so-edicao" type="button" data-acao="remover-item" data-k="rm-${esc(id)}" aria-label="Tirar ${esc(p.nome)} da lista">${icone('x')}</button>
+    </li>`;
+  }
+
+  function desenharDespensa(prods, itens) {
+    const arr = [...prods].map(([id, p]) => ({ id, p }));
+    const guardados = arr.filter((x) => x.p.qtd > 0), zerados = arr.filter((x) => x.p.qtd <= 0);
+    el.aDespensa.textContent = guardados.length;
+    if (!arr.length) {
+      el.subDespensa.textContent = ui.carregado ? 'Nada guardado' : 'Abrindo…';
+      el.corpoDespensa.innerHTML = vazio(ui.carregado ? 'Nada cadastrado ainda' : 'Abrindo a despensa…',
+        'Use Cadastrar compra para registrar o que você comprou ou o que já tem em casa. Cada produto novo entra na sua base e, depois, basta digitar parte do nome para achá-lo.');
+      return;
+    }
+    el.subDespensa.textContent = guardados.length ? plural(guardados.length, 'produto fechado', 'produtos fechados') : 'Nada guardado';
+    let html = guardados.length ? porTipo(guardados, (x) => linhaDespensa(x, itens)) : '<p class="nota">Nada guardado na despensa agora.</p>';
+    if (zerados.length) {
+      html += `<details class="zerados" id="zerados"${ui.zeradosAberto ? ' open' : ''}><summary>${icone('seta')}<span>Sem estoque na despensa</span><span class="n">${zerados.length}</span></summary>${porTipo(zerados, (x) => linhaZerada(x, itens))}</details>`;
+    }
+    el.corpoDespensa.innerHTML = html;
+  }
+  function desenharCozinha(prods, itens) {
+    const uso = [...prods].map(([id, p]) => ({ id, p })).filter((x) => x.p.emUso);
+    el.aCozinha.textContent = uso.length;
+    el.subCozinha.textContent = uso.length ? plural(uso.length, 'produto aberto', 'produtos abertos') : (ui.carregado ? 'Nada aberto' : 'Abrindo…');
+    el.corpoCozinha.innerHTML = uso.length ? porTipo(uso, (x) => linhaCozinha(x, itens))
+      : vazio('', 'Nada aberto agora. Quando você tocar em Abrir na despensa, o produto vem para cá.');
+  }
+  function desenharLista(prods, itens) {
+    const arr = [...itens].map(([id, it]) => {
+      const p = it.produtoId ? prods.get(it.produtoId) : null;
+      return { id, it, p: p || { nome: it.nome || 'Produto removido', tipo: 'alimento', qtd: 0, emUso: false, exemplo: it.exemplo }, orfao: !p };
+    });
+    const pend = arr.filter((x) => !x.it.noCarrinho), carrinho = arr.filter((x) => x.it.noCarrinho);
+    // Valor estimado: quantidade × último preço de cada item da lista (pendentes e no carrinho).
+    const comPreco = arr.filter((x) => x.p.preco > 0);
+    const semPreco = arr.length - comPreco.length;
+    el.estimativa.hidden = !arr.length;
+    el.estValor.textContent = comPreco.length ? fmtR(comPreco.reduce((s, x) => s + x.p.preco * (x.it.qtd || 1), 0)) : '—';
+    el.estNota.textContent = !comPreco.length
+      ? 'Os preços entram quando você cadastra uma compra.'
+      : `Quantidade × último preço de cada item${semPreco ? ` · ${semPreco} sem preço` : ''}`;
+    el.aLista.textContent = pend.length;
+    el.subLista.textContent = !ui.carregado && !arr.length ? 'Abrindo…'
+      : pend.length ? `${pend.length} para comprar${carrinho.length ? ` · ${carrinho.length} no carrinho` : ''}`
+      : carrinho.length ? `${carrinho.length} no carrinho` : 'Nada para comprar';
+    if (!arr.length) {
+      el.corpoLista.innerHTML = vazio('', 'Nada para comprar. Quando um produto acabar na despensa, você pode mandá-lo para cá. Também dá para adicionar pelo campo acima.');
+    } else {
+      let html = porTipo(pend, linhaLista);
+      if (carrinho.length) html += `<div class="grupo"><p class="grupo-tit">No carrinho</p><ul class="linhas">${carrinho.sort(porNome).map(linhaLista).join('')}</ul></div>`;
+      el.corpoLista.innerHTML = html;
+    }
+    el.peLista.hidden = !carrinho.length || ui.ro;
+    el.btnCompraLista.innerHTML = `${icone('sacola')}Cadastrar compra (${carrinho.length})`;
+    document.body.classList.toggle('tem-pe', carrinho.length > 0 && !ui.ro);
+  }
+  function efeitoTexto(l, p) {
+    const atual = p ? p.qtd : 0;
+    const partes = [`Despensa: ${atual} → ${atual + l.qtd}`];
+    const v = lerPreco(l.precoTxt);
+    if (v > 0) partes.push(`${l.qtd} × ${fmtR(v)} = ${fmtR(v * l.qtd)}`);
+    else if (p && p.preco > 0) partes.push(`último preço ${fmtR(p.preco)}${p.precoEm ? ` (${fmtData(p.precoEm)})` : ''}`);
+    return partes.join(' · ');
+  }
+  // Ao digitar o preço, atualiza só o texto da linha e o total, sem redesenhar os campos.
+  function atualizarEfeito(i) {
+    const l = compra.linhas[i];
+    const alvo = el.compraLinhas.querySelector(`[data-linha="${i}"] .lc-efeito`);
+    if (!l || !alvo) return;
+    alvo.textContent = efeitoTexto(l, l.produtoId ? ler('produtos', l.produtoId) : null);
+  }
+  function atualizarTotalCompra() {
+    let total = 0, com = 0;
+    for (const l of compra.linhas) { const v = lerPreco(l.precoTxt); if (v > 0) { total += v * l.qtd; com++; } }
+    const sem = compra.linhas.length - com;
+    el.compraTotal.hidden = !com;
+    el.compraTotal.textContent = com ? `Total: ${fmtR(total)}${sem ? ` · ${sem} sem preço` : ''}` : '';
+  }
+  function desenharCompra() {
+    const prods = todos('produtos'), itens = todos('lista');
+    compra.linhas = compra.linhas.filter((l) => l.novo || prods.has(l.produtoId));
+    comFoco(() => {
+      el.compraLinhas.innerHTML = compra.linhas.map((l, i) => {
+        const p = l.produtoId ? prods.get(l.produtoId) : null;
+        const nome = p ? p.nome : l.novo.nome;
+        const tipo = p ? p.tipo : l.novo.tipo;
+        const q = l.qtd;
+        const efeito = efeitoTexto(l, p);
+        const campoDesc = l.novo
+          ? `<label class="lc-desc" for="lcd-${l.chave}"><span class="rotulo">Descrição (opcional)</span><input id="lcd-${l.chave}" data-k="lcd-${l.chave}" data-desc="${i}" maxlength="100" autocomplete="off" enterkeyhint="next" placeholder="Ex.: 1 = 1 fardo com 6 latas" value="${esc(l.novo.descricao || '')}"></label>`
+          : '';
+        return `<li class="lc" data-linha="${i}">
+          <div class="lc-cab"><span class="lc-nome">${esc(nome)}</span>${l.novo ? '<span class="tag-novo">novo</span>' : ''}<button class="x" type="button" data-acao="lc-remover" data-k="lcr-${l.chave}" aria-label="Tirar ${esc(nome)} da compra">${icone('x')}</button></div>
+          ${p ? notaHtml(p.descricao) : ''}
+          <div class="lc-ctrl">
+            <div class="lc-par"><span class="rotulo">Quantidade</span>
+              <div class="cont" role="group" aria-label="Quantidade comprada">
+                <button class="cont-b" type="button" data-acao="lc-menos" data-k="lcm-${l.chave}" aria-label="Menos"${q <= 1 ? ' disabled' : ''}>${icone('menos')}</button>
+                <span class="cont-v">${q}</span>
+                <button class="cont-b" type="button" data-acao="lc-mais" data-k="lcp-${l.chave}" aria-label="Mais">${icone('mais')}</button>
+              </div>
+            </div>
+            <div class="lc-par"><label class="rotulo" for="lcv-${l.chave}">Preço por unidade</label>
+              <div class="dinheiro"><span aria-hidden="true">R$</span><input class="din" id="lcv-${l.chave}" data-k="lcv-${l.chave}" data-preco="${i}" type="text" inputmode="numeric" autocomplete="off" enterkeyhint="next" value="${esc(l.precoTxt || '0,00')}"></div>
+            </div>
+            <div class="lc-par"><label class="rotulo" for="lcw-${l.chave}">Validade</label>
+              <input class="data-val" id="lcw-${l.chave}" data-k="lcw-${l.chave}" data-validade="${i}" type="date" value="${esc(l.validade || '')}">
+            </div>
+            ${l.novo ? `<div class="lc-par"><span class="rotulo">Tipo</span>
+              <div class="seg" role="group" aria-label="Tipo do produto">
+                <button type="button" data-acao="lc-tipo" data-valor="alimento" data-k="lcta-${l.chave}" aria-pressed="${tipo === 'alimento'}">Alimento</button>
+                <button type="button" data-acao="lc-tipo" data-valor="limpeza" data-k="lctl-${l.chave}" aria-pressed="${tipo === 'limpeza'}">Limpeza</button>
+              </div>
+            </div>` : ''}
+          </div>
+          ${campoDesc}
+          <p class="lc-efeito">${esc(efeito)}</p>
+        </li>`;
+      }).join('');
+      const naCompra = new Set(compra.linhas.map((l) => l.produtoId).filter(Boolean));
+      const daLista = [...itens].map(([, it]) => it.produtoId).filter((pid) => pid && prods.has(pid) && !naCompra.has(pid))
+        .sort((a, b) => collator.compare(prods.get(a).nome, prods.get(b).nome));
+      el.compraDaLista.innerHTML = daLista.length
+        ? `<p>Da sua lista de compras:</p>${daLista.map((pid) => `<button class="chip-add" type="button" data-acao="lc-dalista" data-id="${esc(pid)}" data-k="lcl-${esc(pid)}">${icone('mais')}${esc(prods.get(pid).nome)}</button>`).join('')}`
+        : '';
+    });
+    el.compraVazia.hidden = compra.linhas.length > 0;
+    el.compraSalvar.disabled = !compra.linhas.length;
+    el.compraSalvar.textContent = compra.linhas.length > 1 ? `Salvar compra (${compra.linhas.length} produtos)` : 'Salvar compra';
+    atualizarTotalCompra();
+  }
+
+  let avisosCache = null;
+  function desenharAvisos(prods) {
+    const avisos = [];
+    if (ui.erroDados) avisos.push(['alerta', 'A conexão com os dados foi interrompida. Recarregue a página para ver as mudanças mais recentes.']);
+    else if (ui.lento) avisos.push(['alerta', ui.temDados ? 'Mostrando a última versão salva neste aparelho. Ela pode estar desatualizada enquanto a conexão não volta.' : 'Ainda não foi possível carregar a despensa. Verifique a conexão; o app continua tentando.']);
+    const html = avisos.map(([tipo, txt]) => `<div class="aviso${tipo ? ' aviso-' + tipo : ''}" role="status"><p>${esc(txt)}</p></div>`).join('');
+    if (html !== avisosCache) { avisosCache = html; el.avisos.innerHTML = html; }
+    el.avisos.hidden = !html;
+    const nEx = [...prods.values()].filter((p) => p.exemplo).length;
+    const vazio = ui.carregado && !ui.erroDados && !prods.size && !todos('lista').size;
+    el.exemplos.innerHTML = vazio
+      ? '<div class="aviso"><p><b>Primeiro acesso?</b> Traga os produtos que você já cadastrou no computador: use o arquivo <b>temai-dados.json</b> que o botão Exportar dados baixou.</p><button class="btn btn-mini btn-pri" type="button" data-acao="importar" data-k="importar-vazio">Importar dados</button></div>'
+      : nEx && !ui.ro
+        ? `<div class="aviso"><p><b>Itens de exemplo</b> para você testar à vontade. Quando quiser começar a sua despensa, apague os exemplos.</p><button class="btn btn-mini${ui.confirmaEx ? ' btn-confirma' : ''}" type="button" data-acao="apagar-ex" data-k="apagar-ex">${ui.confirmaEx ? `Confirmar: apagar ${nEx}` : 'Apagar exemplos'}</button></div>`
+        : '';
+  }
+
+  // Indicador no cabeçalho: última sincronização com o banco da casa, ou o que falta enviar.
+  function quando(d) {
+    const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    if (d.toDateString() === new Date().toDateString()) return `às ${hora}`;
+    return `em ${d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} às ${hora}`;
+  }
+  function desenharSync() {
+    const fila = gravacoes > 0 || naFila.produtos || naFila.lista || local.produtos.size > 0 || local.lista.size > 0;
+    const semRede = ui.temDados && (!navigator.onLine || (ui.carregado && (doCache.produtos || doCache.lista)));
+    let estado = 'ok', txt;
+    if (ui.erroSalvar) { estado = 'erro'; txt = 'Não foi possível salvar'; }
+    else if (semRede) { estado = fila ? 'salvando' : 'offline'; txt = fila ? `Sem internet · ${gravacoes ? `${gravacoes} a enviar` : 'falta enviar'}` : 'Sem internet'; }
+    else if (fila) { estado = 'salvando'; txt = 'Salvando…'; }
+    else if (ui.salvoEm) txt = `Sincronizado ${quando(ui.salvoEm)}`;
+    else if (ui.carregado) txt = 'Sincronizado';
+    else { estado = 'abrindo'; txt = 'Abrindo…'; }
+    el.sync.dataset.estado = estado;
+    if (el.sync.textContent !== txt) el.sync.textContent = txt;
+  }
+
+  function desenhar() {
+    const prods = todos('produtos'), itens = todos('lista');
+    desenharSync();
+    document.body.classList.toggle('ro', ui.ro);
+    comFoco(() => {
+      desenharAvisos(prods);
+      desenharDespensa(prods, itens);
+      desenharCozinha(prods, itens);
+      desenharLista(prods, itens);
+    });
+    if (el.dlgCompra.open) desenharCompra();
+  }
+
+  /* ---------- Editar produto ---------- */
+  let timerExcluir = 0;
+  function resetExcluir() {
+    clearTimeout(timerExcluir);
+    el.fpExcluir.dataset.confirma = '0';
+    el.fpExcluir.textContent = 'Excluir da base';
+  }
+  function escolherTipo(t) {
+    if (!TIPOS.includes(t)) return;
+    el.fpTipo.dataset.valor = t;
+    for (const b of el.fpTipo.querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.valor === t));
+  }
+  // A mesma folha serve para editar um produto e para cadastrar um novo direto na lista.
+  function modoProduto(novo) {
+    el.dpTit.textContent = novo ? 'Novo produto' : 'Editar produto';
+    el.fpQtdCampo.hidden = novo;
+    el.fpUsoCampo.hidden = novo;
+    el.fpPrecoCampo.hidden = novo;
+    el.fpListaQtdCampo.hidden = !novo;
+    if (novo) el.fpLotesCampo.hidden = true;
+    el.fpExcluir.hidden = novo;
+    el.fpSalvar.textContent = novo ? 'Cadastrar e pôr na lista' : 'Salvar';
+    resetExcluir();
+    el.fpErro.hidden = true;
+  }
+  function abrirProduto(id) {
+    const p = ler('produtos', id);
+    if (!p) return;
+    ui.editando = id;
+    modoProduto(false);
+    el.fpNome.value = p.nome;
+    el.fpDesc.value = p.descricao || '';
+    escolherTipo(p.tipo);
+    el.fpQtd.value = String(p.qtd);
+    el.fpUso.checked = !!p.emUso;
+    const lotes = ajustarLotes(p.lotes, p.qtd);
+    el.fpLotesCampo.hidden = !lotes.length;
+    el.fpLotes.innerHTML = lotes.map((l, i) => `<label class="lote" for="fpl-${i}"><span class="lote-n">${l.qtd} ×</span><input class="data-val" id="fpl-${i}" type="date" data-lote="${i}" value="${esc(l.validade || '')}"><span class="vh">validade de ${l.qtd}</span></label>`).join('');
+    el.fpPreco.value = fmtNum(p.preco > 0 ? p.preco : 0);
+    el.fpPreco.removeAttribute('aria-invalid');
+    el.fpPrecoInfo.textContent = p.preco > 0
+      ? `${p.precoEm ? `Registrado em ${fmtData(p.precoEm)}. ` : ''}Mude aqui só para corrigir; o preço novo entra pela compra.`
+      : 'Ainda sem preço. Ele é registrado quando você cadastra uma compra.';
+    abrirDialogo(el.dlgProduto);
+  }
+  function abrirNovoProduto(nome, tipo) {
+    ui.editando = null;
+    modoProduto(true);
+    el.fpNome.value = nome;
+    el.fpDesc.value = '';
+    el.fpListaQtd.value = '1';
+    escolherTipo(tipo);
+    abrirDialogo(el.dlgProduto);
+    focarDepois(el.dlgProduto, el.fpDesc);
+  }
+  function erroForm(alvo, msg) { alvo.textContent = msg; alvo.hidden = false; }
+  el.fpNome.addEventListener('input', () => { el.fpErro.hidden = true; });
+  el.fpPreco.addEventListener('input', () => { el.fpPreco.removeAttribute('aria-invalid'); el.fpErro.hidden = true; });
+  el.formProduto.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    if (ui.ro) return;
+    const id = ui.editando;
+    const nome = capitalizar(limpo(el.fpNome.value));
+    if (!nome) { erroForm(el.fpErro, 'Dê um nome ao produto.'); el.fpNome.focus(); return; }
+    const outro = acharPorNome(nome, id);
+    if (outro) { erroForm(el.fpErro, `Já existe “${ler('produtos', outro).nome}” na base. Cada produto tem um nome único.`); return; }
+    const descricao = limpo(el.fpDesc.value);
+    const tipoEscolhido = TIPOS.includes(el.fpTipo.dataset.valor) ? el.fpTipo.dataset.valor : null;
+    if (!id) {
+      const nid = novoId('p');
+      const novo = { nome, descricao, tipo: tipoEscolhido || 'alimento', qtd: 0, emUso: false, exemplo: false, criadoEm: agora(), atualizadoEm: agora() };
+      const n = lerQtd(el.fpListaQtd.value);
+      const desfazerNovo = transacao(() => { gravar('produtos', nid, novo); gravar('lista', nid, novoItem(nid, novo, n)); });
+      fecharDialogo(el.dlgProduto);
+      piscar('l:' + nid);
+      toast(`${nome} entrou na base de produtos e na lista: ${n}.`, ['Desfazer', desfazerNovo]);
+      return;
+    }
+    const antes = ler('produtos', id);
+    if (!antes) { fecharDialogo(el.dlgProduto); toast('Este produto foi excluído em outro aparelho.'); return; }
+    const tipo = tipoEscolhido || antes.tipo;
+    const qtd = Math.max(0, Math.round(num(el.fpQtd.value, antes.qtd)));
+    const emUso = el.fpUso.checked;
+    const precoLido = lerPreco(el.fpPreco.value);
+    if (Number.isNaN(precoLido)) {
+      erroForm(el.fpErro, 'Confira o preço: use só números, como 5,49.');
+      el.fpPreco.setAttribute('aria-invalid', 'true');
+      el.fpPreco.focus();
+      return;
+    }
+    let preco = antes.preco || null, precoEm = antes.precoEm || null;
+    if (precoLido === null) { preco = null; precoEm = null; }
+    else if (precoLido !== antes.preco) { preco = precoLido; precoEm = agora(); }
+    const lotes = ajustarLotes(antes.lotes, antes.qtd).map((l, i) => {
+      const campo = el.fpLotes.querySelector(`input[data-lote="${i}"]`);
+      return { validade: campo && ehDataISO(campo.value) ? campo.value : null, qtd: l.qtd };
+    });
+    const desfazer = transacao(() => {
+      gravar('produtos', id, { ...antes, nome, descricao, tipo, qtd, lotes, emUso, preco, precoEm, exemplo: false, atualizadoEm: agora() });
+      const it = ler('lista', id);
+      if (it && it.nome !== nome) gravar('lista', id, { ...it, nome });
+    });
+    fecharDialogo(el.dlgProduto);
+    piscar('p:' + id);
+    if (antes.qtd > 0 && qtd === 0 && !ler('lista', id)) perguntarLista(id, desfazer, 'zerou');
+    else toast('Produto atualizado.', ['Desfazer', desfazer]);
+  });
+  el.fpExcluir.addEventListener('click', () => {
+    if (el.fpExcluir.dataset.confirma !== '1') {
+      el.fpExcluir.dataset.confirma = '1';
+      el.fpExcluir.textContent = 'Confirmar exclusão';
+      clearTimeout(timerExcluir);
+      timerExcluir = setTimeout(resetExcluir, 4000);
+      return;
+    }
+    const id = ui.editando;
+    resetExcluir();
+    fecharDialogo(el.dlgProduto);
+    excluirProduto(id);
+  });
+
+  /* ---------- Eventos ---------- */
+  el.formZero.addEventListener('submit', (ev) => { ev.preventDefault(); responderZero(true); });
+  el.dzN.addEventListener('input', atualizarDz);
+  el.dzNao.addEventListener('click', () => responderZero(false));
+  el.dlgZero.addEventListener('close', () => { if (zero) responderZero(false); });
+  el.formCompra.addEventListener('submit', (ev) => { ev.preventDefault(); salvarCompra(); });
+
+  // Campos de valor em R$: sempre no formato 0,00, e os dígitos entram pela direita ("198" vira 1,98).
+  // Roda na fase de captura, antes dos outros ouvintes lerem o valor.
+  function definirDinheiro(campo, digitos) {
+    const d = String(digitos).replace(/\D/g, '').replace(/^0+/, '').slice(0, 8);
+    const txt = fmtNum((d ? parseInt(d, 10) : 0) / 100);
+    if (campo.value !== txt) campo.value = txt;
+    const fim = campo.value.length;
+    try { campo.setSelectionRange(fim, fim); } catch (e) { /* sem cursor */ }
+  }
+  const mascararDinheiro = (campo) => definirDinheiro(campo, campo.value);
+  const ehCampoDinheiro = (c) => !!(c && c.matches && c.matches('input.din'));
+  // Digitar e apagar mexem sempre no fim do número, onde quer que esteja o cursor.
+  document.addEventListener('beforeinput', (ev) => {
+    const c = ev.target;
+    if (!ehCampoDinheiro(c)) return;
+    const atuais = c.value.replace(/\D/g, '').replace(/^0+/, '');
+    const tudoSelecionado = c.value.length > 0 && c.selectionStart === 0 && c.selectionEnd === c.value.length;
+    let novos = null;
+    if (ev.inputType === 'insertText') novos = (tudoSelecionado ? '' : atuais) + String(ev.data || '').replace(/\D/g, '');
+    else if (ev.inputType === 'deleteContentBackward') novos = tudoSelecionado ? '' : atuais.slice(0, -1);
+    else if (/^delete(Word|SoftLine|HardLine)Backward$/.test(ev.inputType)) novos = '';
+    if (novos === null) return;   // colar, teclados com composição etc.: o ajuste no evento input resolve
+    ev.preventDefault();
+    definirDinheiro(c, novos);
+    c.dispatchEvent(new Event('input', { bubbles: true }));
+  }, true);
+  document.addEventListener('input', (ev) => { if (ehCampoDinheiro(ev.target)) mascararDinheiro(ev.target); }, true);
+  // O cursor fica sempre no fim, para os dígitos entrarem pela direita.
+  const cursorNoFim = (c) => requestAnimationFrame(() => {
+    if (document.activeElement !== c || c.selectionStart !== c.selectionEnd) return;
+    const fim = c.value.length;
+    try { c.setSelectionRange(fim, fim); } catch (e) { /* sem cursor */ }
+  });
+  document.addEventListener('focusin', (ev) => { if (ehCampoDinheiro(ev.target)) cursorNoFim(ev.target); });
+  document.addEventListener('click', (ev) => { if (ehCampoDinheiro(ev.target)) cursorNoFim(ev.target); });
+  el.compraLinhas.addEventListener('input', (ev) => {
+    const campo = ev.target;
+    if (campo.matches('input[data-desc]')) {
+      const l = compra.linhas[Number(campo.dataset.desc)];
+      if (l && l.novo) l.novo.descricao = campo.value;
+    } else if (campo.matches('input[data-preco]')) {
+      const i = Number(campo.dataset.preco);
+      const l = compra.linhas[i];
+      if (!l) return;
+      l.precoTxt = campo.value;
+      campo.removeAttribute('aria-invalid');
+      el.compraErro.hidden = true;
+      atualizarEfeito(i);
+      atualizarTotalCompra();
+    } else if (campo.matches('input[data-validade]')) {
+      const l = compra.linhas[Number(campo.dataset.validade)];
+      if (l) l.validade = campo.value;
+    }
+  });
+  el.compraLinhas.addEventListener('change', (ev) => {
+    const campo = ev.target;
+    if (!campo.matches('input[data-validade]')) return;
+    const l = compra.linhas[Number(campo.dataset.validade)];
+    if (l) l.validade = campo.value;
+  });
+  // Enter no preço vai para o preço da linha seguinte; na descrição, volta para a busca.
+  el.compraLinhas.addEventListener('keydown', (ev) => {
+    if (ev.key !== 'Enter') return;
+    if (ev.target.matches('input[data-desc]')) { ev.preventDefault(); el.buscaCompra.focus(); return; }
+    if (ev.target.matches('input[data-preco], input[data-validade]')) {
+      ev.preventDefault();
+      const campos = [...el.compraLinhas.querySelectorAll('input[data-preco], input[data-validade]')];
+      (campos[campos.indexOf(ev.target) + 1] || el.buscaCompra).focus();
+    }
+  });
+  el.dlgCompra.addEventListener('cancel', (ev) => { if (buscaCompra.escAgora()) ev.preventDefault(); });
+  el.dlgCompra.addEventListener('close', () => buscaCompra.fechar());
+
+  document.addEventListener('click', (ev) => {
+    const fechar = ev.target.closest('[data-fechar]');
+    if (fechar) { const d = fechar.closest('dialog'); if (d) fecharDialogo(d); return; }
+    const alvo = ev.target.closest('[data-acao]');
+    if (!alvo) return;
+    const acao = alvo.dataset.acao;
+    if (ui.ro && acao !== 'copiar') return;
+    const comId = alvo.closest('[data-id]'), comItem = alvo.closest('[data-item]'), comLinha = alvo.closest('[data-linha]');
+    const pid = comId ? comId.dataset.id : null;
+    const iid = comItem ? comItem.dataset.item : null;
+    const li = comLinha ? Number(comLinha.dataset.linha) : -1;
+    const linha = li >= 0 ? compra.linhas[li] : null;
+    switch (acao) {
+      case 'comprar': abrirCompra([]); break;
+      case 'comprar-carrinho':
+        abrirCompra([...todos('lista')].filter(([, it]) => it.noCarrinho && it.produtoId).map(([, it]) => it.produtoId));
+        break;
+      case 'abrir': abrir(pid); break;
+      case 'acabou': acabou(pid); break;
+      case 'lista': alternarLista(pid); break;
+      case 'editar': abrirProduto(pid); break;
+      case 'marcar': marcar(iid); break;
+      case 'remover-item': removerItem(iid); break;
+      case 'qtd-item': perguntarLista(iid, null, 'editar'); break;
+      case 'tirar': tirarDaDespensa(pid); break;
+      case 'dz-menos': el.dzN.value = String(Math.max(1, lerQtd(el.dzN.value) - 1)); atualizarDz(); break;
+      case 'dz-mais': el.dzN.value = String(Math.min(999, lerQtd(el.dzN.value) + 1)); atualizarDz(); break;
+      case 'apagar-ex': apagarExemplos(); break;
+      case 'copiar': copiarLista(); break;
+      case 'exportar': exportarDados(); break;
+      case 'conta': abrirConta(); break;
+      case 'importar': escolherArquivo(); break;
+      case 'instalar': instalar(); break;
+      case 'entrar': entrarComGoogle(); break;
+      case 'tentar': esconderPortao(); escutar(); break;
+      case 'recarregar': location.reload(); break;
+      case 'tipo': escolherTipo(alvo.dataset.valor); break;
+      case 'lc-menos': if (linha) { linha.qtd = Math.max(1, linha.qtd - 1); desenharCompra(); } break;
+      case 'lc-mais': if (linha) { linha.qtd += 1; desenharCompra(); } break;
+      case 'lc-tipo': if (linha && linha.novo && TIPOS.includes(alvo.dataset.valor)) { linha.novo.tipo = alvo.dataset.valor; desenharCompra(); } break;
+      case 'lc-remover': if (linha) { compra.linhas.splice(li, 1); desenharCompra(); el.buscaCompra.focus(); } break;
+      case 'lc-dalista': addLinhaProduto(pid); desenharCompra(); break;
+    }
+  });
+  for (const d of [el.dlgCompra, el.dlgProduto, el.dlgCopiar, el.dlgZero, el.dlgConta, el.dlgImportar]) {
+    d.addEventListener('click', (ev) => { if (ev.target === d) fecharDialogo(d); });
+  }
+  document.addEventListener('toggle', (ev) => {
+    if (ev.target && ev.target.id === 'zerados') {
+      ui.zeradosAberto = ev.target.open;
+    }
+  }, true);
+
+  /* ================= Conta e entrada ================= */
+  const VERSAO = '2026.11.02';
+  const ERROS_LOGIN = {
+    'auth/unauthorized-domain': 'Este endereço ainda não está autorizado no Firebase (Authentication → Configurações → Domínios autorizados).',
+    'auth/operation-not-allowed': 'O login com Google ainda não foi ativado no Firebase (Authentication → Método de login → Google).',
+    'auth/network-request-failed': 'Sem conexão com a internet. Conecte-se e tente de novo.',
+    'auth/too-many-requests': 'Muitas tentativas seguidas. Espere um pouco e tente de novo.',
+    'auth/user-disabled': 'Esta conta foi desativada.'
+  };
+  const LOGIN_CANCELADO = ['auth/popup-closed-by-user', 'auth/cancelled-popup-request', 'auth/user-cancelled'];
+
+  // Tela de entrada: antes de logar, conta sem acesso, falta de configuração ou de internet.
+  function portao(estado, email) {
+    const textos = {
+      entrar: ['Entrar', 'A despensa, o que está em uso e a lista de compras da casa, iguais em todos os celulares.', 'Entrar com Google', 'entrar', 'Só as contas da casa veem e alteram os dados.'],
+      'sem-acesso': ['Sem acesso', `A conta <b>${esc(email || '')}</b> não tem acesso a esta despensa. Entre com uma das contas da casa.`, 'Entrar com outra conta', 'entrar', 'Se esta conta deveria ter acesso, confira as regras do Firestore no console do Firebase e toque em Tentar de novo.'],
+      config: ['Falta configurar', 'O arquivo config.js ainda não tem os dados do projeto Firebase.', null, '', ''],
+      offline: ['Sem conexão', 'Para abrir o TemAí? pela primeira vez neste aparelho, é preciso internet.', 'Tentar de novo', 'recarregar', '']
+    };
+    const [tit, txt, botao, acao, nota] = textos[estado] || textos.entrar;
+    ui.fora = true;
+    document.body.classList.add('fora');
+    el.portao.hidden = false;
+    el.portaoTit.textContent = tit;
+    el.portaoTxt.innerHTML = txt;
+    el.portaoBtn.hidden = !botao;
+    el.portaoBtn.disabled = false;
+    if (botao) { el.portaoBtn.textContent = botao; el.portaoBtn.dataset.acao = acao; }
+    el.portaoBtn2.hidden = estado !== 'sem-acesso';
+    el.portaoErro.hidden = true;
+    el.portaoNota.textContent = nota;
+    el.portaoNota.hidden = !nota;
+    el.conta.hidden = true;
+  }
+  function esconderPortao() {
+    ui.fora = false;
+    document.body.classList.remove('fora');
+    el.portao.hidden = true;
+    el.conta.hidden = !usuario;
+  }
+  async function entrarComGoogle() {
+    if (!auth || el.portaoBtn.disabled) return;
+    const provedor = new F.GoogleAuthProvider();
+    provedor.setCustomParameters({ prompt: 'select_account' });
+    const rotulo = el.portaoBtn.textContent;
+    el.portaoErro.hidden = true;
+    el.portaoBtn.disabled = true;
+    el.portaoBtn.textContent = 'Entrando…';
+    try {
+      await F.signInWithPopup(auth, provedor);
+    } catch (e) {
+      const c = codigo(e);
+      // Navegador que bloqueia a janela de login: entra pela própria página.
+      if (c === 'auth/popup-blocked' || c === 'auth/operation-not-supported-in-this-environment') {
+        try { await F.signInWithRedirect(auth, provedor); return; } catch (e2) { erroLogin(e2); }
+      } else erroLogin(e);
+    } finally {
+      el.portaoBtn.disabled = false;
+      el.portaoBtn.textContent = rotulo;
+    }
+  }
+  function erroLogin(e) {
+    const c = codigo(e);
+    if (LOGIN_CANCELADO.includes(c)) return;
+    el.portaoErro.textContent = ERROS_LOGIN[c] || `Não foi possível entrar (${c}). Tente de novo.`;
+    el.portaoErro.hidden = false;
+  }
+  function semAcesso() {
+    pararEscuta();
+    limparDados();
+    portao('sem-acesso', usuario ? usuario.email : '');
+    agendar();
+  }
+
+  /* ---------- Leitura do banco compartilhado ---------- */
+  let paradas = [];
+  let relogio = 0;
+  const definitivo = { produtos: false, lista: false };
+  function pararEscuta() {
+    for (const parar of paradas) { try { parar(); } catch (e) { /* já parado */ } }
+    paradas = [];
+    clearTimeout(relogio);
+  }
+  function limparDados() {
+    for (const col of ['produtos', 'lista']) {
+      server[col] = new Map();
+      local[col].clear();
+      naFila[col] = false;
+      doCache[col] = true;
+      definitivo[col] = false;
+    }
+    localEm.clear();
+    Object.assign(ui, { carregado: false, lento: false, erroDados: '', temDados: false, salvoEm: null, erroSalvar: false });
+  }
+  function escutar() {
+    pararEscuta();
+    limparDados();
+    agendar();
+    relogio = setTimeout(() => { if (!ui.carregado) { ui.lento = true; agendar(); } }, 10000);
+    for (const col of ['produtos', 'lista']) {
+      const ref = F.collection(fs, 'casas', CASA, col);
+      paradas.push(F.onSnapshot(ref, { includeMetadataChanges: true }, (snap) => {
+        const m = new Map(), pend = new Set();
+        for (const d of snap.docs) {
+          m.set(d.id, col === 'produtos' ? normProduto(d.data()) : normItem(d.data()));
+          if (d.metadata.hasPendingWrites) pend.add(d.id);
+        }
+        server[col] = m;
+        // O que esta tela mudou já está no banco do aparelho: a camada "local" pode sair.
+        const t = Date.now();
+        for (const [id, v] of [...local[col]]) {
+          const k = `${col}/${id}`;
+          if ((v === APAGADO ? !m.has(id) : pend.has(id)) || t - (localEm.get(k) || 0) > 3000) { local[col].delete(id); localEm.delete(k); }
+        }
+        naFila[col] = snap.metadata.hasPendingWrites;
+        doCache[col] = snap.metadata.fromCache;
+        ui.temDados = true;
+        if (!snap.metadata.fromCache) {
+          definitivo[col] = true;
+          if (!snap.metadata.hasPendingWrites) ui.salvoEm = new Date();
+        }
+        if (definitivo.produtos && definitivo.lista && !ui.carregado) { ui.carregado = true; ui.lento = false; clearTimeout(relogio); }
+        agendar();
+      }, (err) => {
+        if (codigo(err) === 'permission-denied') { semAcesso(); return; }
+        clearTimeout(relogio);
+        ui.carregado = true;
+        ui.lento = false;
+        ui.erroDados = 'erro';
+        agendar();
+      }));
+    }
+  }
+
+  /* ---------- Conta: instalar, importar, exportar, sair ---------- */
+  let pedidoInstalar = null;
+  window.addEventListener('beforeinstallprompt', (e) => { pedidoInstalar = e; el.btnInstalar.hidden = false; });
+  window.addEventListener('appinstalled', () => { pedidoInstalar = null; el.btnInstalar.hidden = true; });
+  async function instalar() {
+    const pedido = pedidoInstalar;
+    if (!pedido) return;
+    pedidoInstalar = null;
+    el.btnInstalar.hidden = true;
+    fecharDialogo(el.dlgConta);
+    try { await pedido.prompt(); } catch (e) { /* o navegador não deixou */ }
+  }
+  function abrirConta() {
+    resetSair();
+    el.btnInstalar.hidden = !pedidoInstalar;
+    abrirDialogo(el.dlgConta);
+  }
+
+  let timerSair = 0;
+  function resetSair() {
+    clearTimeout(timerSair);
+    el.btnSair.dataset.confirma = '0';
+    el.btnSairTxt.textContent = 'Sair deste aparelho';
+    el.contaPendente.hidden = true;
+    el.contaPendente.classList.remove('alerta');
+  }
+  el.btnSair.addEventListener('click', () => {
+    if (el.btnSair.dataset.confirma !== '1') {
+      const fila = gravacoes > 0 || naFila.produtos || naFila.lista;
+      el.btnSair.dataset.confirma = '1';
+      el.btnSairTxt.textContent = 'Confirmar saída';
+      el.contaPendente.textContent = fila
+        ? 'Atenção: há mudanças deste aparelho que ainda não foram enviadas (sem internet). Se sair agora, elas se perdem.'
+        : 'Ao sair, os dados guardados neste aparelho são apagados. Para voltar, é só entrar de novo.';
+      el.contaPendente.classList.toggle('alerta', fila);
+      el.contaPendente.hidden = false;
+      clearTimeout(timerSair);
+      timerSair = setTimeout(resetSair, 6000);
+      return;
+    }
+    resetSair();
+    sairDoAparelho();
+  });
+  async function sairDoAparelho() {
+    fecharDialogo(el.dlgConta);
+    pararEscuta();
+    try { await F.signOut(auth); } catch (e) { /* segue */ }
+    try { await F.terminate(fs); await F.clearIndexedDbPersistence(fs); } catch (e) { /* outra aba aberta: o banco do aparelho é limpo depois */ }
+    location.reload();
+  }
+
+  let importacao = null;
+  function escolherArquivo() {
+    if (!usuario || ui.fora) return;
+    el.arquivo.value = '';
+    el.arquivo.click();
+  }
+  el.arquivo.addEventListener('change', async () => {
+    const f = el.arquivo.files && el.arquivo.files[0];
+    if (!f) return;
+    let dados = null;
+    try { dados = JSON.parse(await f.text()); } catch (e) { dados = null; }
+    if (!dados || dados.formato !== 'temai-1' || !dados.produtos || typeof dados.produtos !== 'object') {
+      toast('Este arquivo não é um arquivo de dados do TemAí? (temai-dados.json).');
+      return;
+    }
+    const idOk = (id) => /^[A-Za-z0-9_-]{1,120}$/.test(id);
+    const prods = Object.entries(dados.produtos).filter(([id, d]) => idOk(id) && d && typeof d === 'object');
+    const itens = Object.entries(dados.lista && typeof dados.lista === 'object' ? dados.lista : {}).filter(([id, d]) => idOk(id) && d && typeof d === 'object');
+    if (!prods.length && !itens.length) { toast('O arquivo não tem produtos para importar.'); return; }
+    importacao = { prods, itens };
+    const existentes = todos('produtos').size;
+    const repetidos = prods.filter(([id]) => ler('produtos', id)).length;
+    const quandoArq = dados.exportadoEm && fmtData(dados.exportadoEm) ? `, exportados em ${fmtData(dados.exportadoEm)}` : '';
+    el.dimTxt.innerHTML = `O arquivo tem <b>${plural(prods.length, 'produto', 'produtos')}</b> e <b>${plural(itens.length, 'item', 'itens')}</b> na lista de compras${quandoArq}. ` +
+      (!existentes ? 'Tudo entra no banco da casa e aparece nos dois celulares.'
+        : repetidos ? `${plural(repetidos, 'produto que já está', 'produtos que já estão')} no app ${repetidos === 1 ? 'será substituído' : 'serão substituídos'} pela versão do arquivo; os demais continuam.`
+          : 'Os produtos que já estão no app continuam.');
+    fecharDialogo(el.dlgConta);
+    abrirDialogo(el.dlgImportar);
+  });
+  el.formImportar.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const imp = importacao;
+    importacao = null;
+    fecharDialogo(el.dlgImportar);
+    if (imp) importar(imp);
+  });
+  // Os dados de teste viram dados de verdade: nada entra marcado como exemplo.
+  function importar({ prods, itens }) {
+    const ops = [
+      ...prods.map(([id, d]) => ['produtos', id, { ...normProduto(d), exemplo: false }]),
+      ...itens.map(([id, d]) => ['lista', id, { ...normItem(d), exemplo: false }])
+    ];
+    for (let i = 0; i < ops.length; i += 400) {
+      const lote = F.writeBatch(fs);
+      for (const [col, id, v] of ops.slice(i, i + 400)) lote.set(F.doc(fs, 'casas', CASA, col, id), paraGravar(v));
+      acompanhar(lote.commit());
+    }
+    agendar();
+    toast(`Importados: ${plural(prods.length, 'produto', 'produtos')} e ${plural(itens.length, 'item', 'itens')} da lista.`);
+  }
+
+  /* ================= Início ================= */
+  async function iniciar() {
+    const opcoesData = innerWidth < 760 ? { weekday: 'short', day: 'numeric', month: 'short' } : { weekday: 'long', day: 'numeric', month: 'long' };
+    el.hoje.textContent = new Date().toLocaleDateString('pt-BR', opcoesData);
+    el.sync.title = 'Dados da casa, sincronizados entre os aparelhos';
+    el.contaVersao.textContent = `Versão ${VERSAO}`;
+    el.contaDica.hidden = !(/iPhone|iPad|iPod/.test(navigator.userAgent) && !navigator.standalone);
+    desenhar();
+    let cfg = null;
+    try {
+      [F, cfg] = await Promise.all([import('./firebase.js'), import('./config.js')]);
+    } catch (e) {
+      portao('offline');
+      return;
+    }
+    const c = cfg && cfg.firebaseConfig;
+    if (!c || !c.apiKey || !c.projectId || /COLE/i.test(c.apiKey)) { portao('config'); return; }
+    const app = F.initializeApp(c);
+    auth = F.getAuth(app);
+    F.useDeviceLanguage(auth);
+    fs = F.initializeFirestore(app, {
+      localCache: F.persistentLocalCache({ tabManager: F.persistentMultipleTabManager() }),
+      ignoreUndefinedProperties: true
+    });
+    F.getRedirectResult(auth).catch((e) => erroLogin(e));
+    F.onAuthStateChanged(auth, (u) => {
+      if (u) {
+        if (usuario && usuario.uid === u.uid && !ui.fora) return;
+        usuario = u;
+        el.contaIni.textContent = (u.email || '?').charAt(0).toUpperCase();
+        el.contaEmail.textContent = u.email || '';
+        esconderPortao();
+        escutar();
+      } else {
+        usuario = null;
+        pararEscuta();
+        limparDados();
+        portao('entrar');
+      }
+      agendar();
+    });
+  }
+  window.addEventListener('online', agendar);
+  window.addEventListener('offline', agendar);
+  if ('serviceWorker' in navigator && window.isSecureContext) {
+    navigator.serviceWorker.register('./sw.js').catch(() => { /* sem modo offline */ });
+  }
+  iniciar();
+})();
+</script>
+</body>
+</html>
