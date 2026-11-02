@@ -15,7 +15,6 @@
 <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="modulepreload" href="firebase.js">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&display=swap">
@@ -1681,7 +1680,8 @@ body.fora .atalhos, body.fora .avisos, body.fora .palco, body.fora .sync, body.f
   let avisosCache = null;
   function desenharAvisos(prods) {
     const avisos = [];
-    if (ui.erroDados) avisos.push(['alerta', 'A conexão com os dados foi interrompida. Recarregue a página para ver as mudanças mais recentes.']);
+    if (ui.erroDados === 'sem-banco') avisos.push(['alerta', 'O banco de dados ainda não foi criado no Firebase (Firestore Database → Criar banco de dados). Depois de criar, recarregue a página.']);
+    else if (ui.erroDados) avisos.push(['alerta', 'A conexão com os dados foi interrompida. Recarregue a página para ver as mudanças mais recentes.']);
     else if (ui.lento) avisos.push(['alerta', ui.temDados ? 'Mostrando a última versão salva neste aparelho. Ela pode estar desatualizada enquanto a conexão não volta.' : 'Ainda não foi possível carregar a despensa. Verifique a conexão; o app continua tentando.']);
     const html = avisos.map(([tipo, txt]) => `<div class="aviso${tipo ? ' aviso-' + tipo : ''}" role="status"><p>${esc(txt)}</p></div>`).join('');
     if (html !== avisosCache) { avisosCache = html; el.avisos.innerHTML = html; }
@@ -1983,10 +1983,14 @@ body.fora .atalhos, body.fora .avisos, body.fora .palco, body.fora .sync, body.f
   }, true);
 
   /* ================= Conta e entrada ================= */
-  const VERSAO = '2026.11.02';
+  const VERSAO = '2026.11.02-2';
   const ERROS_LOGIN = {
     'auth/unauthorized-domain': 'Este endereço ainda não está autorizado no Firebase (Authentication → Configurações → Domínios autorizados).',
     'auth/operation-not-allowed': 'O login com Google ainda não foi ativado no Firebase (Authentication → Método de login → Google).',
+    'auth/configuration-not-found': 'O login ainda não foi configurado no Firebase (Authentication → Começar; depois ative o Google em Método de login).',
+    'auth/api-key-not-valid.-please-pass-a-valid-api-key.': 'A chave do Firebase que está no config.js não é válida.',
+    'auth/invalid-api-key': 'A chave do Firebase que está no config.js não é válida.',
+    'auth/web-storage-unsupported': 'Este navegador está bloqueando o armazenamento de dados dos sites. Permita e tente de novo.',
     'auth/network-request-failed': 'Sem conexão com a internet. Conecte-se e tente de novo.',
     'auth/too-many-requests': 'Muitas tentativas seguidas. Espere um pouco e tente de novo.',
     'auth/user-disabled': 'Esta conta foi desativada.'
@@ -2110,7 +2114,7 @@ body.fora .atalhos, body.fora .avisos, body.fora .palco, body.fora .sync, body.f
         clearTimeout(relogio);
         ui.carregado = true;
         ui.lento = false;
-        ui.erroDados = 'erro';
+        ui.erroDados = codigo(err) === 'not-found' ? 'sem-banco' : 'erro';
         agendar();
       }));
     }

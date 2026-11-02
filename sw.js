@@ -1,7 +1,7 @@
 // Deixa o TemAí? abrir sem internet. Arquivos do próprio site: busca a versão nova na rede
 // e, sem rede, usa a última guardada. Fontes do Google: guardadas depois da primeira vez.
 // Firebase e login do Google passam direto (o próprio Firebase guarda os dados no aparelho).
-const VERSAO = 'temai-2026.11.02';
+const VERSAO = 'temai-2026.11.02-2';
 const FONTES = 'temai-fontes';
 const BASE = new URL('./', self.location).href;
 const ESSENCIAIS = ['./', 'index.html', 'firebase.js', 'config.js', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/icon-192.png'];
